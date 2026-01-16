@@ -27,14 +27,7 @@ ui <- dashboardPage(
       menuItem("Overview", tabName = "overview", icon = icon("info-circle")),
       menuItem("Assays", tabName = "assays", icon = icon("table")),
       menuItem("Reductions", tabName = "reductions", icon = icon("project-diagram")),
-      menuItem("Metadata", tabName = "metadata", icon = icon("list"),
-        actionLink("metadata_table_link", "Cell Metadata", icon = icon("table"), 
-                   style = "color: #b8c7ce; padding-left: 15px; display: block; padding: 10px 5px 10px 40px;"),
-        actionLink("metadata_summary_link", "Metadata Summary", icon = icon("chart-bar"),
-                   style = "color: #b8c7ce; padding-left: 15px; display: block; padding: 10px 5px 10px 40px;"),
-        actionLink("metadata_plot_link", "Distribution Plots", icon = icon("chart-area"),
-                   style = "color: #b8c7ce; padding-left: 15px; display: block; padding: 10px 5px 10px 40px;")
-      ),
+      menuItem("Metadata", tabName = "metadata", icon = icon("list")),
       menuItem("Graphs", tabName = "graphs", icon = icon("share-alt")),
       menuItem("Images", tabName = "images", icon = icon("image"))
     )
@@ -235,11 +228,20 @@ server <- function(input, output, session) {
     fluidRow(
       column(12,
         box(
-          title = "Object Summary",
+          title = "Seurat Summary",
           status = "info",
           solidHeader = TRUE,
           width = 12,
           verbatimTextOutput("object_summary")
+        )
+      ),
+      column(12,
+        box(
+          title = "SeuratInfo",
+          status = "primary",
+          solidHeader = TRUE,
+          width = 12,
+          verbatimTextOutput("seurat_info_output")
         )
       ),
       column(6,
@@ -294,6 +296,22 @@ server <- function(input, output, session) {
     print(seurat_obj())
   })
   
+  output$seurat_info_output <- renderPrint({
+    req(seurat_obj())
+    obj <- seurat_obj()
+    info <- SeuratInfo(obj)
+    
+    cat(info$version, "\n")
+    cat(info$graphs, "\n")
+    cat(info$reductions, "\n")
+    cat(info$images, "\n")
+    cat("\n", info$ident_label, "\n")
+    cat("Idents():\n")
+    print(info$idents_table)
+    cat("\nAssays:\n")
+    print(info$assays_table)
+  })
+  
   observeEvent(input$goto_assays, {
     updateTabItems(session, "sidebar", "assays")
   })
@@ -304,30 +322,6 @@ server <- function(input, output, session) {
   
   observeEvent(input$goto_metadata, {
     updateTabItems(session, "sidebar", "metadata")
-  })
-  
-  observeEvent(input$metadata_table_link, {
-    updateTabItems(session, "sidebar", "metadata")
-    shinyjs::delay(300, shinyjs::runjs(
-      "var el = document.getElementById('metadata_table_box'); 
-       if(el) { el.scrollIntoView({behavior: 'smooth', block: 'start'}); }"
-    ))
-  })
-  
-  observeEvent(input$metadata_summary_link, {
-    updateTabItems(session, "sidebar", "metadata")
-    shinyjs::delay(300, shinyjs::runjs(
-      "var el = document.getElementById('metadata_summary_box'); 
-       if(el) { el.scrollIntoView({behavior: 'smooth', block: 'start'}); }"
-    ))
-  })
-  
-  observeEvent(input$metadata_plot_link, {
-    updateTabItems(session, "sidebar", "metadata")
-    shinyjs::delay(300, shinyjs::runjs(
-      "var el = document.getElementById('metadata_plot_box'); 
-       if(el) { el.scrollIntoView({behavior: 'smooth', block: 'start'}); }"
-    ))
   })
   
   output$assays_ui <- renderUI({
@@ -450,6 +444,28 @@ server <- function(input, output, session) {
     fluidRow(
       column(12,
         box(
+          title = "Quick Navigation",
+          status = "primary",
+          solidHeader = TRUE,
+          width = 12,
+          div(style = "display: flex; gap: 15px; justify-content: center; padding: 10px;",
+            actionButton("scroll_to_table", "Cell Metadata", 
+                        icon = icon("table"),
+                        class = "btn-primary",
+                        style = "min-width: 150px;"),
+            actionButton("scroll_to_summary", "Metadata Summary", 
+                        icon = icon("chart-bar"),
+                        class = "btn-info",
+                        style = "min-width: 150px;"),
+            actionButton("scroll_to_plots", "Distribution Plots", 
+                        icon = icon("chart-area"),
+                        class = "btn-success",
+                        style = "min-width: 150px;")
+          )
+        )
+      ),
+      column(12,
+        box(
           id = "metadata_table_box",
           title = "Cell Metadata",
           status = "primary",
@@ -505,6 +521,27 @@ server <- function(input, output, session) {
   output$metadata_plot <- renderPlot({
     req(seurat_obj(), input$metadata_column)
     plot_metadata_distribution(seurat_obj(), input$metadata_column, config)
+  })
+  
+  observeEvent(input$scroll_to_table, {
+    shinyjs::runjs(
+      "var el = document.getElementById('metadata_table_box'); 
+       if(el) { el.scrollIntoView({behavior: 'smooth', block: 'start'}); }"
+    )
+  })
+  
+  observeEvent(input$scroll_to_summary, {
+    shinyjs::runjs(
+      "var el = document.getElementById('metadata_summary_box'); 
+       if(el) { el.scrollIntoView({behavior: 'smooth', block: 'start'}); }"
+    )
+  })
+  
+  observeEvent(input$scroll_to_plots, {
+    shinyjs::runjs(
+      "var el = document.getElementById('metadata_plot_box'); 
+       if(el) { el.scrollIntoView({behavior: 'smooth', block: 'start'}); }"
+    )
   })
   
   output$graphs_ui <- renderUI({

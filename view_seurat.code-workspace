@@ -1,0 +1,28 @@
+{
+  "folders": [
+    {
+      "path": "."
+    }
+  ],
+  "settings": {
+    "r.rterm.mac": "/usr/local/bin/R",
+    "r.bracketedPaste": true,
+    "r.sessionWatcher": true,
+    "r.alwaysUseActiveTerminal": true,
+    "files.associations": {
+      "*.Rmd": "rmd",
+      "*.rmd": "rmd"
+    },
+    "[r]": {
+      "editor.defaultFormatter": "REditorSupport.r",
+      "editor.formatOnSave": false,
+      "editor.tabSize": 2
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "REditorSupport.r",
+      "rdebugger.r-debugger"
+    ]
+  }
+}
