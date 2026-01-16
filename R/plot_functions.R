@@ -73,6 +73,11 @@ plot_metadata_distribution <- function(obj, column, config) {
         title = paste("Distribution of", column),
         x = column,
         y = "Count"
+      ) +
+      theme(
+        axis.text = element_text(size = 14, color = "black"),
+        axis.title = element_text(size = 16, color = "black", face = "bold"),
+        plot.title = element_text(size = 18, color = "black", face = "bold")
       )
   } else {
     freq_table <- as.data.frame(table(data))
@@ -86,7 +91,12 @@ plot_metadata_distribution <- function(obj, column, config) {
         x = column,
         y = "Count"
       ) +
-      theme(axis.text.x = element_text(angle = 45, hjust = 1))
+      theme(
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 14, color = "black"),
+        axis.text.y = element_text(size = 14, color = "black"),
+        axis.title = element_text(size = 16, color = "black", face = "bold"),
+        plot.title = element_text(size = 18, color = "black", face = "bold")
+      )
   }
   
   return(p)

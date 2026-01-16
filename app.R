@@ -507,9 +507,13 @@ server <- function(input, output, session) {
       obj@meta.data,
       options = list(
         pageLength = config$rows_per_page,
-        scrollX = TRUE
+        scrollX = TRUE,
+        scrollCollapse = TRUE,
+        autoWidth = TRUE,
+        columnDefs = list(list(width = '100px', targets = "_all"))
       ),
-      filter = 'top'
+      filter = 'top',
+      class = 'cell-border stripe'
     )
   })
   
@@ -609,6 +613,11 @@ server <- function(input, output, session) {
     
     image_names <- names(obj@images)
     
+    # Get all available features (genes) and metadata columns for coloring
+    all_features <- rownames(obj)
+    metadata_cols <- colnames(obj@meta.data)
+    color_choices <- c("None", metadata_cols, all_features)
+    
     fluidRow(
       column(12,
         box(
@@ -617,15 +626,35 @@ server <- function(input, output, session) {
           solidHeader = TRUE,
           width = 12,
           selectInput("selected_image", "Select Image:", choices = image_names),
+          selectInput("spatial_color_by", "Color by:", 
+                      choices = color_choices,
+                      selected = "None"),
+          actionButton("plot_spatial", "Plot", class = "btn-primary"),
+          hr(),
           plotOutput("spatial_plot", height = "600px")
         )
       )
     )
   })
   
-  output$spatial_plot <- renderPlot({
+  observeEvent(input$plot_spatial, {
     req(seurat_obj(), input$selected_image)
-    SpatialPlot(seurat_obj(), images = input$selected_image)
+    
+    output$spatial_plot <- renderPlot({
+      obj <- seurat_obj()
+      
+      if (is.null(input$spatial_color_by) || input$spatial_color_by == "None") {
+        SpatialPlot(obj, images = input$selected_image)
+      } else {
+        # Check if it's a metadata column or a feature
+        if (input$spatial_color_by %in% colnames(obj@meta.data)) {
+          SpatialPlot(obj, images = input$selected_image, group.by = input$spatial_color_by)
+        } else {
+          # It's a feature/gene
+          SpatialFeaturePlot(obj, features = input$spatial_color_by, images = input$selected_image)
+        }
+      }
+    })
   })
 }
 
