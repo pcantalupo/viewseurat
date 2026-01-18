@@ -10,7 +10,7 @@ load_config <- function() {
     point_alpha = 0.8,
     show_legend = TRUE,
     show_sparse_info = TRUE,
-    default_matrix_rows = 50,
+    default_matrix_rows = 10,
     default_matrix_cols = 20,
     enable_caching = TRUE,
     parallel_processing = FALSE,
@@ -51,19 +51,19 @@ get_assay_info <- function(obj, assay_name) {
   return(info)
 }
 
-get_matrix_sample <- function(matrix, max_rows = 50, max_cols = 20) {
+get_matrix_sample <- function(matrix, max_rows = 10, max_cols = 20) {
   if (nrow(matrix) > max_rows) {
-    row_idx <- sample(nrow(matrix), max_rows)
+    row_idx <- 1:max_rows
   } else {
     row_idx <- 1:nrow(matrix)
   }
-  
+
   if (ncol(matrix) > max_cols) {
-    col_idx <- sample(ncol(matrix), max_cols)
+    col_idx <- 1:max_cols
   } else {
     col_idx <- 1:ncol(matrix)
   }
-  
+
   if (inherits(matrix, "dgCMatrix") || inherits(matrix, "sparseMatrix")) {
     return(as.matrix(matrix[row_idx, col_idx, drop = FALSE]))
   } else {

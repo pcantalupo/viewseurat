@@ -39,7 +39,10 @@ ui <- dashboardPage(
       tags$style(HTML("
         .box-body { overflow-x: auto; }
         .dataTables_wrapper { overflow-x: auto; }
-        .small-box { cursor: pointer; }
+        .small-box { cursor: pointer; min-height: 120px; }
+        .small-box h3 { font-size: 42px; }
+        .small-box p { font-size: 16px; }
+        .small-box .icon { font-size: 70px; }
         #drop_zone {
           border: 3px dashed #3c8dbc;
           border-radius: 10px;
@@ -243,50 +246,6 @@ server <- function(input, output, session) {
           width = 12,
           verbatimTextOutput("seurat_info_output")
         )
-      ),
-      column(6,
-        valueBox(
-          value = ncol(obj),
-          subtitle = "Total Cells",
-          icon = icon("circle"),
-          color = "blue"
-        )
-      ),
-      column(6,
-        div(
-          onclick = "Shiny.setInputValue('goto_assays', Math.random());",
-          style = "cursor: pointer;",
-          valueBox(
-            value = length(obj@assays),
-            subtitle = "Assays",
-            icon = icon("table"),
-            color = "green"
-          )
-        )
-      ),
-      column(6,
-        div(
-          onclick = "Shiny.setInputValue('goto_reductions', Math.random());",
-          style = "cursor: pointer;",
-          valueBox(
-            value = length(obj@reductions),
-            subtitle = "Reductions",
-            icon = icon("project-diagram"),
-            color = "purple"
-          )
-        )
-      ),
-      column(6,
-        div(
-          onclick = "Shiny.setInputValue('goto_metadata', Math.random());",
-          style = "cursor: pointer;",
-          valueBox(
-            value = ncol(obj@meta.data),
-            subtitle = "Metadata Columns",
-            icon = icon("list"),
-            color = "orange"
-          )
-        )
       )
     )
   })
@@ -305,7 +264,7 @@ server <- function(input, output, session) {
     cat(info$graphs, "\n")
     cat(info$reductions, "\n")
     cat(info$images, "\n")
-    cat("\n", info$ident_label, "\n")
+    cat(info$ident_label, "\n")
     cat("Idents():\n")
     print(info$idents_table)
     cat("\nAssays:\n")

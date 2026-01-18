@@ -119,23 +119,29 @@ assay_panel_server <- function(assay_name, obj, config, output) {
         cat("Matrix dimensions:", nrow(counts_matrix), "x", ncol(counts_matrix), "\n")
         cat("Sparsity:", sparsity$sparsity_percent, "%\n")
         cat("Memory:", round(sparsity$memory_mb, 2), "MB\n")
-        cat("Showing sample of", config$default_matrix_rows, "features and", 
-            config$default_matrix_cols, "cells\n")
+        cat("Showing all", nrow(counts_matrix), "features and first",
+            min(ncol(counts_matrix), 20), "cells\n")
       }
     })
     
     output[[paste0(assay_name, "_counts_table")]] <- renderDT({
       counts_matrix <- get_assay_data_safe(obj, assay_name, "counts")
       if (!is.null(counts_matrix)) {
-        sample_matrix <- get_matrix_sample(
-          counts_matrix, 
-          config$default_matrix_rows, 
-          config$default_matrix_cols
-        )
+        # Extract all rows (genes) but limit columns (cells) to first 20
+        num_cols <- min(ncol(counts_matrix), 20)
+        col_idx <- 1:num_cols
+
+        if (inherits(counts_matrix, "dgCMatrix") || inherits(counts_matrix, "sparseMatrix")) {
+          sample_matrix <- as.matrix(counts_matrix[, col_idx, drop = FALSE])
+        } else {
+          sample_matrix <- counts_matrix[, col_idx, drop = FALSE]
+        }
+
         datatable(
           as.data.frame(sample_matrix),
           options = list(
-            pageLength = 25,
+            pageLength = 10,
+            lengthMenu = list(c(10, 25, 50, 100, -1), c('10', '25', '50', '100', 'All')),
             scrollX = TRUE,
             scrollY = "400px"
           )
@@ -152,23 +158,29 @@ assay_panel_server <- function(assay_name, obj, config, output) {
         cat("Matrix dimensions:", nrow(data_matrix), "x", ncol(data_matrix), "\n")
         cat("Sparsity:", sparsity$sparsity_percent, "%\n")
         cat("Memory:", round(sparsity$memory_mb, 2), "MB\n")
-        cat("Showing sample of", config$default_matrix_rows, "features and", 
-            config$default_matrix_cols, "cells\n")
+        cat("Showing all", nrow(data_matrix), "features and first",
+            min(ncol(data_matrix), 20), "cells\n")
       }
     })
     
     output[[paste0(assay_name, "_data_table")]] <- renderDT({
       data_matrix <- get_assay_data_safe(obj, assay_name, "data")
       if (!is.null(data_matrix)) {
-        sample_matrix <- get_matrix_sample(
-          data_matrix, 
-          config$default_matrix_rows, 
-          config$default_matrix_cols
-        )
+        # Extract all rows (genes) but limit columns (cells) to first 20
+        num_cols <- min(ncol(data_matrix), 20)
+        col_idx <- 1:num_cols
+
+        if (inherits(data_matrix, "dgCMatrix") || inherits(data_matrix, "sparseMatrix")) {
+          sample_matrix <- as.matrix(data_matrix[, col_idx, drop = FALSE])
+        } else {
+          sample_matrix <- data_matrix[, col_idx, drop = FALSE]
+        }
+
         datatable(
           as.data.frame(sample_matrix),
           options = list(
-            pageLength = 25,
+            pageLength = 10,
+            lengthMenu = list(c(10, 25, 50, 100, -1), c('10', '25', '50', '100', 'All')),
             scrollX = TRUE,
             scrollY = "400px"
           )
@@ -183,23 +195,29 @@ assay_panel_server <- function(assay_name, obj, config, output) {
       if (!is.null(scale_matrix)) {
         cat("Matrix dimensions:", nrow(scale_matrix), "x", ncol(scale_matrix), "\n")
         cat("Memory:", round(as.numeric(object.size(scale_matrix)) / 1024^2, 2), "MB\n")
-        cat("Showing sample of", config$default_matrix_rows, "features and", 
-            config$default_matrix_cols, "cells\n")
+        cat("Showing all", nrow(scale_matrix), "features and first",
+            min(ncol(scale_matrix), 20), "cells\n")
       }
     })
     
     output[[paste0(assay_name, "_scale_table")]] <- renderDT({
       scale_matrix <- get_assay_data_safe(obj, assay_name, "scale.data")
       if (!is.null(scale_matrix)) {
-        sample_matrix <- get_matrix_sample(
-          scale_matrix, 
-          config$default_matrix_rows, 
-          config$default_matrix_cols
-        )
+        # Extract all rows (genes) but limit columns (cells) to first 20
+        num_cols <- min(ncol(scale_matrix), 20)
+        col_idx <- 1:num_cols
+
+        if (inherits(scale_matrix, "dgCMatrix") || inherits(scale_matrix, "sparseMatrix")) {
+          sample_matrix <- as.matrix(scale_matrix[, col_idx, drop = FALSE])
+        } else {
+          sample_matrix <- scale_matrix[, col_idx, drop = FALSE]
+        }
+
         datatable(
           as.data.frame(sample_matrix),
           options = list(
-            pageLength = 25,
+            pageLength = 10,
+            lengthMenu = list(c(10, 25, 50, 100, -1), c('10', '25', '50', '100', 'All')),
             scrollX = TRUE,
             scrollY = "400px"
           )
@@ -211,8 +229,9 @@ assay_panel_server <- function(assay_name, obj, config, output) {
   output[[paste0(assay_name, "_variable_features")]] <- renderDT({
     var_features <- get_top_variable_features(obj, assay_name, n = config$max_features_display)
     if (!is.null(var_features) && length(var_features) > 0) {
+      var_features_sorted <- sort(var_features)
       datatable(
-        data.frame(Feature = var_features, Rank = 1:length(var_features)),
+        data.frame(Feature = var_features_sorted),
         options = list(pageLength = 25)
       )
     }
