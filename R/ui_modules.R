@@ -89,9 +89,7 @@ assay_panel_ui <- function(assay_name, obj) {
           fluidRow(
             column(12,
               h4("Variable Features"),
-              DTOutput(paste0(assay_name, "_variable_features")),
-              br(),
-              plotOutput(paste0(assay_name, "_heatmap"), height = "600px")
+              DTOutput(paste0(assay_name, "_variable_features"))
             )
           )
         ),
@@ -235,14 +233,6 @@ assay_panel_server <- function(assay_name, obj, config, output) {
         options = list(pageLength = 25)
       )
     }
-  })
-  
-  output[[paste0(assay_name, "_heatmap")]] <- renderPlot({
-    tryCatch({
-      plot_feature_heatmap(obj, assay_name, n_cells = 100, config = config)
-    }, error = function(e) {
-      NULL
-    })
   })
   
   output[[paste0(assay_name, "_feature_meta")]] <- renderDT({

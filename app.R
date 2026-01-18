@@ -181,7 +181,8 @@ ui <- dashboardPage(
 server <- function(input, output, session) {
   
   seurat_obj <- reactiveVal(NULL)
-  
+  file_size_bytes <- reactiveVal(NULL)
+
   observeEvent(input$seurat_file, {
     req(input$seurat_file)
     
@@ -200,8 +201,9 @@ server <- function(input, output, session) {
       if (!inherits(obj, "Seurat")) {
         stop("File does not contain a valid Seurat object")
       }
-      
+
       seurat_obj(obj)
+      file_size_bytes(input$seurat_file$size)
       
       output$upload_status <- renderText({
         paste0(
@@ -246,6 +248,15 @@ server <- function(input, output, session) {
           width = 12,
           verbatimTextOutput("seurat_info_output")
         )
+      ),
+      column(12,
+        box(
+          title = "Size Info",
+          status = "info",
+          solidHeader = TRUE,
+          width = 12,
+          verbatimTextOutput("size_info_output")
+        )
       )
     )
   })
@@ -270,7 +281,35 @@ server <- function(input, output, session) {
     cat("\nAssays:\n")
     print(info$assays_table)
   })
-  
+
+  output$size_info_output <- renderPrint({
+    req(seurat_obj(), file_size_bytes())
+    obj <- seurat_obj()
+
+    # Format file size on disk
+    disk_bytes <- file_size_bytes()
+    if (disk_bytes >= 1024^3) {
+      disk_size <- paste0(round(disk_bytes / 1024^3, 2), " GB")
+    } else if (disk_bytes >= 1024^2) {
+      disk_size <- paste0(round(disk_bytes / 1024^2, 2), " MB")
+    } else {
+      disk_size <- paste0(round(disk_bytes / 1024, 2), " KB")
+    }
+
+    # Get R session memory size
+    mem_bytes <- as.numeric(object.size(obj))
+    if (mem_bytes >= 1024^3) {
+      mem_size <- paste0(round(mem_bytes / 1024^3, 2), " GB")
+    } else if (mem_bytes >= 1024^2) {
+      mem_size <- paste0(round(mem_bytes / 1024^2, 2), " MB")
+    } else {
+      mem_size <- paste0(round(mem_bytes / 1024, 2), " KB")
+    }
+
+    cat("Size on disk:", disk_size, "\n")
+    cat("Size in R session:", mem_size, "\n")
+  })
+
   observeEvent(input$goto_assays, {
     updateTabItems(session, "sidebar", "assays")
   })
@@ -340,10 +379,10 @@ server <- function(input, output, session) {
                       choices = reduction_names,
                       selected = if(config$default_reduction %in% reduction_names) 
                         config$default_reduction else reduction_names[1]),
-          selectInput("color_by", "Color by:", 
+          selectInput("color_by", "Color by:",
                       choices = c("None", colnames(obj@meta.data))),
-          numericInput("dim1", "Dimension 1:", value = 1, min = 1),
-          numericInput("dim2", "Dimension 2:", value = 2, min = 1),
+          selectInput("dim1", "Dimension 1:", choices = 1, selected = 1),
+          selectInput("dim2", "Dimension 2:", choices = 2, selected = 2),
           actionButton("plot_reduction", "Plot", class = "btn-primary")
         )
       ),
@@ -369,16 +408,28 @@ server <- function(input, output, session) {
       )
     )
   })
-  
+
+  # Update dimension dropdowns when reduction changes
+  observeEvent(input$selected_reduction, {
+    req(seurat_obj(), input$selected_reduction)
+    obj <- seurat_obj()
+    embeddings <- Embeddings(obj, reduction = input$selected_reduction)
+    n_dims <- ncol(embeddings)
+    dim_choices <- as.character(1:n_dims)
+
+    updateSelectInput(session, "dim1", choices = dim_choices, selected = "1")
+    updateSelectInput(session, "dim2", choices = dim_choices, selected = if(n_dims >= 2) "2" else "1")
+  })
+
   observeEvent(input$plot_reduction, {
     req(seurat_obj(), input$selected_reduction)
     
     output$reduction_plot <- renderPlotly({
       plot_reduction_interactive(
-        seurat_obj(), 
+        seurat_obj(),
         input$selected_reduction,
         input$color_by,
-        c(input$dim1, input$dim2),
+        c(as.integer(input$dim1), as.integer(input$dim2)),
         config
       )
     })
