@@ -2,6 +2,7 @@
 
 export(FindIdentLabel)
 export(SeuratInfo)
+export(ViewSeurat)
 export(assay_panel_server)
 export(assay_panel_ui)
 export(create_matrix_heatmap)

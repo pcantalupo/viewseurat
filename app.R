@@ -8,7 +8,6 @@ library(dplyr)
 library(Matrix)
 library(qs2)
 library(shinyjs)
-
 source("R/seurat_utils.R")
 source("R/plot_functions.R")
 source("R/ui_modules.R")
@@ -19,7 +18,12 @@ options(shiny.maxRequestSize = config$max_upload_size_mb * 1024^2)
 ui <- dashboardPage(
   skin = "blue",
   
-  dashboardHeader(title = "Seurat Object Viewer"),
+  dashboardHeader(
+    title = "Seurat Object Viewer",
+    tags$li(class = "dropdown", 
+            style = "padding: 15px; color: white; font-size: 16px;",
+            uiOutput("file_title"))
+  ),
   
   dashboardSidebar(
     sidebarMenu(id = "sidebar",
@@ -182,6 +186,29 @@ server <- function(input, output, session) {
   
   seurat_obj <- reactiveVal(NULL)
   file_size_bytes <- reactiveVal(NULL)
+  uploaded_filename <- reactiveVal("")
+  
+  # Check if object was pre-loaded via ViewSeurat()
+  preloaded_obj <- getShinyOption("viewseurat.obj", default = NULL)
+  preloaded_title <- getShinyOption("viewseurat.title", default = NULL)
+  
+  if (!is.null(preloaded_obj)) {
+    seurat_obj(preloaded_obj)
+    # Set title from parameter or default to "Pre-loaded Object"
+    if (!is.null(preloaded_title) && preloaded_title != "") {
+      uploaded_filename(preloaded_title)
+    } else {
+      uploaded_filename("Pre-loaded Object")
+    }
+  }
+  
+  output$file_title <- renderUI({
+    if (uploaded_filename() != "") {
+      tags$span(style = "color: white;", uploaded_filename())
+    } else {
+      NULL
+    }
+  })
 
   observeEvent(input$seurat_file, {
     req(input$seurat_file)
@@ -204,6 +231,7 @@ server <- function(input, output, session) {
 
       seurat_obj(obj)
       file_size_bytes(input$seurat_file$size)
+      uploaded_filename(input$seurat_file$name)
       
       output$upload_status <- renderText({
         paste0(
@@ -283,18 +311,8 @@ server <- function(input, output, session) {
   })
 
   output$size_info_output <- renderPrint({
-    req(seurat_obj(), file_size_bytes())
+    req(seurat_obj())
     obj <- seurat_obj()
-
-    # Format file size on disk
-    disk_bytes <- file_size_bytes()
-    if (disk_bytes >= 1024^3) {
-      disk_size <- paste0(round(disk_bytes / 1024^3, 2), " GB")
-    } else if (disk_bytes >= 1024^2) {
-      disk_size <- paste0(round(disk_bytes / 1024^2, 2), " MB")
-    } else {
-      disk_size <- paste0(round(disk_bytes / 1024, 2), " KB")
-    }
 
     # Get R session memory size
     mem_bytes <- as.numeric(object.size(obj))
@@ -306,7 +324,19 @@ server <- function(input, output, session) {
       mem_size <- paste0(round(mem_bytes / 1024, 2), " KB")
     }
 
-    cat("Size on disk:", disk_size, "\n")
+    # Show file size on disk if available (from upload)
+    disk_bytes <- file_size_bytes()
+    if (!is.null(disk_bytes)) {
+      if (disk_bytes >= 1024^3) {
+        disk_size <- paste0(round(disk_bytes / 1024^3, 2), " GB")
+      } else if (disk_bytes >= 1024^2) {
+        disk_size <- paste0(round(disk_bytes / 1024^2, 2), " MB")
+      } else {
+        disk_size <- paste0(round(disk_bytes / 1024, 2), " KB")
+      }
+      cat("Size on disk:", disk_size, "\n")
+    }
+    
     cat("Size in R session:", mem_size, "\n")
   })
 

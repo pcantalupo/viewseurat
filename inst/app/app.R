@@ -8,29 +8,24 @@ library(dplyr)
 library(Matrix)
 library(qs2)
 library(shinyjs)
+library(viewseurat)
 
-# Get pre-loaded object and state from shinyOptions
-preloaded_obj <- shiny::getShinyOption("viewseurat.obj", default = NULL)
-is_preloaded <- shiny::getShinyOption("viewseurat.preloaded", default = FALSE)
-user_config <- shiny::getShinyOption("viewseurat.config", default = NULL)
-
-# Load config - merge user-provided config with defaults
-config <- viewseurat::load_config()
-if (!is.null(user_config)) {
-  for (name in names(user_config)) {
-    config[[name]] <- user_config[[name]]
-  }
-}
+config <- load_config()
 options(shiny.maxRequestSize = config$max_upload_size_mb * 1024^2)
 
 ui <- dashboardPage(
   skin = "blue",
-
-  dashboardHeader(title = "Seurat Object Viewer"),
-
+  
+  dashboardHeader(
+    title = "Seurat Object Viewer",
+    tags$li(class = "dropdown", 
+            style = "padding: 15px; color: white; font-size: 16px;",
+            uiOutput("file_title"))
+  ),
+  
   dashboardSidebar(
     sidebarMenu(id = "sidebar",
-      if (!is_preloaded) menuItem("Upload", tabName = "upload", icon = icon("upload")),
+      menuItem("Upload", tabName = "upload", icon = icon("upload")),
       menuItem("Overview", tabName = "overview", icon = icon("info-circle")),
       menuItem("Assays", tabName = "assays", icon = icon("table")),
       menuItem("Reductions", tabName = "reductions", icon = icon("project-diagram")),
@@ -39,7 +34,7 @@ ui <- dashboardPage(
       menuItem("Images", tabName = "images", icon = icon("image"))
     )
   ),
-
+  
   dashboardBody(
     useShinyjs(),
     tags$head(
@@ -74,46 +69,45 @@ ui <- dashboardPage(
       tags$script(HTML("
         $(document).on('shiny:connected', function() {
           var dropZone = document.getElementById('drop_zone');
-          if (!dropZone) return;  // Skip if no upload tab
-
+          
           // Prevent default drag behaviors
           ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
             dropZone.addEventListener(eventName, preventDefaults, false);
             document.body.addEventListener(eventName, preventDefaults, false);
           });
-
+          
           function preventDefaults(e) {
             e.preventDefault();
             e.stopPropagation();
           }
-
+          
           // Highlight drop zone when dragging over it
           ['dragenter', 'dragover'].forEach(eventName => {
             dropZone.addEventListener(eventName, highlight, false);
           });
-
+          
           ['dragleave', 'drop'].forEach(eventName => {
             dropZone.addEventListener(eventName, unhighlight, false);
           });
-
+          
           function highlight(e) {
             dropZone.classList.add('dragover');
           }
-
+          
           function unhighlight(e) {
             dropZone.classList.remove('dragover');
           }
-
+          
           // Handle dropped files
           dropZone.addEventListener('drop', handleDrop, false);
-
+          
           function handleDrop(e) {
             var dt = e.dataTransfer;
             var files = dt.files;
-
+            
             if (files.length > 0) {
               var file = files[0];
-
+              
               // Check if file is .rds or .qs2
               if (file.name.toLowerCase().endsWith('.rds') || file.name.toLowerCase().endsWith('.qs2')) {
                 // Update the file input
@@ -121,11 +115,11 @@ ui <- dashboardPage(
                 var dataTransfer = new DataTransfer();
                 dataTransfer.items.add(file);
                 fileInput.files = dataTransfer.files;
-
+                
                 // Trigger change event
                 var event = new Event('change', { bubbles: true });
                 fileInput.dispatchEvent(event);
-
+                
                 // Update drop zone text
                 dropZone.innerHTML = '<h3><i class=\"fa fa-check-circle\"></i> File Ready</h3><p>' + file.name + '</p>';
               } else {
@@ -136,84 +130,91 @@ ui <- dashboardPage(
         });
       "))
     ),
-
-    {
-      # Build tab list dynamically to avoid NULL values
-      tab_list <- list(
-        tabItem(tabName = "overview",
-          uiOutput("overview_ui")
-        ),
-        tabItem(tabName = "assays",
-          uiOutput("assays_ui")
-        ),
-        tabItem(tabName = "reductions",
-          uiOutput("reductions_ui")
-        ),
-        tabItem(tabName = "metadata",
-          uiOutput("metadata_ui")
-        ),
-        tabItem(tabName = "graphs",
-          uiOutput("graphs_ui")
-        ),
-        tabItem(tabName = "images",
-          uiOutput("images_ui")
-        )
-      )
-
-      # Prepend upload tab if not pre-loaded
-      if (!is_preloaded) {
-        upload_tab <- tabItem(tabName = "upload",
-          fluidRow(
-            box(
-              title = "Upload Seurat Object",
-              status = "primary",
-              solidHeader = TRUE,
-              width = 12,
-              div(
-                id = "drop_zone",
-                h3(icon("cloud-upload"), "Drag & Drop RDS or QS2 File Here"),
-                p("or click below to browse"),
-                br()
-              ),
-              fileInput("seurat_file",
-                        "Choose RDS or QS2 file containing Seurat object",
-                        accept = c(".rds", ".RDS", ".qs2", ".QS2")),
-              verbatimTextOutput("upload_status")
-            )
+    
+    tabItems(
+      tabItem(tabName = "upload",
+        fluidRow(
+          box(
+            title = "Upload Seurat Object", 
+            status = "primary", 
+            solidHeader = TRUE,
+            width = 12,
+            div(
+              id = "drop_zone",
+              h3(icon("cloud-upload"), "Drag & Drop RDS or QS2 File Here"),
+              p("or click below to browse"),
+              br()
+            ),
+            fileInput("seurat_file", 
+                      "Choose RDS or QS2 file containing Seurat object",
+                      accept = c(".rds", ".RDS", ".qs2", ".QS2")),
+            verbatimTextOutput("upload_status")
           )
         )
-        tab_list <- c(list(upload_tab), tab_list)
-      }
-
-      do.call(tabItems, tab_list)
-    }
+      ),
+      
+      tabItem(tabName = "overview",
+        uiOutput("overview_ui")
+      ),
+      
+      tabItem(tabName = "assays",
+        uiOutput("assays_ui")
+      ),
+      
+      tabItem(tabName = "reductions",
+        uiOutput("reductions_ui")
+      ),
+      
+      tabItem(tabName = "metadata",
+        uiOutput("metadata_ui")
+      ),
+      
+      tabItem(tabName = "graphs",
+        uiOutput("graphs_ui")
+      ),
+      
+      tabItem(tabName = "images",
+        uiOutput("images_ui")
+      )
+    )
   )
 )
 
 server <- function(input, output, session) {
-
-  # Retrieve pre-loaded object inside server to ensure correct timing
-  server_preloaded_obj <- shiny::getShinyOption("viewseurat.obj", default = NULL)
-  server_is_preloaded <- shiny::getShinyOption("viewseurat.preloaded", default = FALSE)
-
-  # Initialize with pre-loaded object if available
-  seurat_obj <- reactiveVal(server_preloaded_obj)
+  
+  seurat_obj <- reactiveVal(NULL)
   file_size_bytes <- reactiveVal(NULL)
-
-  # Auto-navigate to Overview tab if object is pre-loaded
-  if (server_is_preloaded && !is.null(server_preloaded_obj)) {
-    observeEvent(TRUE, {
-      updateTabItems(session, "sidebar", "overview")
-    }, once = TRUE, ignoreInit = FALSE)
+  uploaded_filename <- reactiveVal("")
+  
+  # Check if object was pre-loaded via ViewSeurat()
+  preloaded_obj <- getShinyOption("viewseurat.obj", default = NULL)
+  preloaded_title <- getShinyOption("viewseurat.title", default = NULL)
+  
+  if (!is.null(preloaded_obj)) {
+    seurat_obj(preloaded_obj)
+    # Set title from parameter or default to "Pre-loaded Object"
+    if (!is.null(preloaded_title) && preloaded_title != "") {
+      uploaded_filename(preloaded_title)
+    } else {
+      uploaded_filename("Pre-loaded Object")
+    }
   }
+  
+  output$file_title <- renderUI({
+    if (uploaded_filename() != "") {
+      tags$span(style = "color: white;", uploaded_filename())
+    } else {
+      NULL
+    }
+  })
 
   observeEvent(input$seurat_file, {
     req(input$seurat_file)
-
+    
     tryCatch({
       # Detect file type and load accordingly
       file_ext <- tolower(tools::file_ext(input$seurat_file$name))
-
+      
       if (file_ext == "rds") {
         obj <- readRDS(input$seurat_file$datapath)
       } else if (file_ext == "qs2") {
@@ -221,14 +222,15 @@ server <- function(input, output, session) {
       } else {
         stop("Unsupported file format. Please use .rds or .qs2 files.")
       }
-
+      
       if (!inherits(obj, "Seurat")) {
         stop("File does not contain a valid Seurat object")
       }
 
       seurat_obj(obj)
       file_size_bytes(input$seurat_file$size)
-
+      uploaded_filename(input$seurat_file$name)
+      
       output$upload_status <- renderText({
         paste0(
           "✓ Successfully loaded Seurat object\n",
@@ -238,10 +240,10 @@ server <- function(input, output, session) {
           "Reductions: ", paste(names(obj@reductions), collapse = ", ")
         )
       })
-
+      
       showNotification("Seurat object loaded successfully!", type = "message")
       updateTabItems(session, "sidebar", "overview")
-
+      
     }, error = function(e) {
       output$upload_status <- renderText({
         paste("✗ Error loading file:", e$message)
@@ -249,11 +251,11 @@ server <- function(input, output, session) {
       showNotification(paste("Error:", e$message), type = "error", duration = NULL)
     })
   })
-
+  
   output$overview_ui <- renderUI({
     req(seurat_obj())
     obj <- seurat_obj()
-
+    
     fluidRow(
       column(12,
         box(
@@ -284,17 +286,17 @@ server <- function(input, output, session) {
       )
     )
   })
-
+  
   output$object_summary <- renderPrint({
     req(seurat_obj())
     print(seurat_obj())
   })
-
+  
   output$seurat_info_output <- renderPrint({
     req(seurat_obj())
     obj <- seurat_obj()
-    info <- viewseurat::SeuratInfo(obj)
-
+    info <- SeuratInfo(obj)
+    
     cat(info$version, "\n")
     cat(info$graphs, "\n")
     cat(info$reductions, "\n")
@@ -310,21 +312,6 @@ server <- function(input, output, session) {
     req(seurat_obj())
     obj <- seurat_obj()
 
-    # Format file size on disk (may not be available for pre-loaded objects)
-    disk_bytes <- file_size_bytes()
-    if (!is.null(disk_bytes)) {
-      if (disk_bytes >= 1024^3) {
-        disk_size <- paste0(round(disk_bytes / 1024^3, 2), " GB")
-      } else if (disk_bytes >= 1024^2) {
-        disk_size <- paste0(round(disk_bytes / 1024^2, 2), " MB")
-      } else {
-        disk_size <- paste0(round(disk_bytes / 1024, 2), " KB")
-      }
-      cat("Size on disk:", disk_size, "\n")
-    } else {
-      cat("Size on disk: N/A (object passed directly)\n")
-    }
-
     # Get R session memory size
     mem_bytes <- as.numeric(object.size(obj))
     if (mem_bytes >= 1024^3) {
@@ -335,26 +322,39 @@ server <- function(input, output, session) {
       mem_size <- paste0(round(mem_bytes / 1024, 2), " KB")
     }
 
+    # Show file size on disk if available (from upload)
+    disk_bytes <- file_size_bytes()
+    if (!is.null(disk_bytes)) {
+      if (disk_bytes >= 1024^3) {
+        disk_size <- paste0(round(disk_bytes / 1024^3, 2), " GB")
+      } else if (disk_bytes >= 1024^2) {
+        disk_size <- paste0(round(disk_bytes / 1024^2, 2), " MB")
+      } else {
+        disk_size <- paste0(round(disk_bytes / 1024, 2), " KB")
+      }
+      cat("Size on disk:", disk_size, "\n")
+    }
+    
     cat("Size in R session:", mem_size, "\n")
   })
 
   observeEvent(input$goto_assays, {
     updateTabItems(session, "sidebar", "assays")
   })
-
+  
   observeEvent(input$goto_reductions, {
     updateTabItems(session, "sidebar", "reductions")
   })
-
+  
   observeEvent(input$goto_metadata, {
     updateTabItems(session, "sidebar", "metadata")
   })
-
+  
   output$assays_ui <- renderUI({
     req(seurat_obj())
     obj <- seurat_obj()
     assay_names <- names(obj@assays)
-
+    
     do.call(tabBox, c(
       list(
         id = "assay_tabs",
@@ -364,26 +364,26 @@ server <- function(input, output, session) {
       lapply(assay_names, function(assay_name) {
         tabPanel(
           assay_name,
-          viewseurat::assay_panel_ui(assay_name, obj)
+          assay_panel_ui(assay_name, obj)
         )
       })
     ))
   })
-
+  
   observe({
     req(seurat_obj())
     obj <- seurat_obj()
     assay_names <- names(obj@assays)
-
+    
     lapply(assay_names, function(assay_name) {
-      viewseurat::assay_panel_server(assay_name, obj, config, output)
+      assay_panel_server(assay_name, obj, config, output)
     })
   })
-
+  
   output$reductions_ui <- renderUI({
     req(seurat_obj())
     obj <- seurat_obj()
-
+    
     if (length(obj@reductions) == 0) {
       return(box(
         title = "Reductions",
@@ -393,9 +393,9 @@ server <- function(input, output, session) {
         "No dimensional reductions found in this object."
       ))
     }
-
+    
     reduction_names <- names(obj@reductions)
-
+    
     fluidRow(
       column(12,
         box(
@@ -403,9 +403,9 @@ server <- function(input, output, session) {
           status = "primary",
           solidHeader = TRUE,
           width = 12,
-          selectInput("selected_reduction", "Select Reduction:",
+          selectInput("selected_reduction", "Select Reduction:", 
                       choices = reduction_names,
-                      selected = if(config$default_reduction %in% reduction_names)
+                      selected = if(config$default_reduction %in% reduction_names) 
                         config$default_reduction else reduction_names[1]),
           selectInput("color_by", "Color by:",
                       choices = c("None", colnames(obj@meta.data))),
@@ -451,9 +451,9 @@ server <- function(input, output, session) {
 
   observeEvent(input$plot_reduction, {
     req(seurat_obj(), input$selected_reduction)
-
+    
     output$reduction_plot <- renderPlotly({
-      viewseurat::plot_reduction_interactive(
+      plot_reduction_interactive(
         seurat_obj(),
         input$selected_reduction,
         input$color_by,
@@ -461,7 +461,7 @@ server <- function(input, output, session) {
         config
       )
     })
-
+    
     output$embeddings_table <- renderDT({
       obj <- seurat_obj()
       embeddings <- Embeddings(obj, reduction = input$selected_reduction)
@@ -474,11 +474,11 @@ server <- function(input, output, session) {
       )
     })
   })
-
+  
   output$metadata_ui <- renderUI({
     req(seurat_obj())
     obj <- seurat_obj()
-
+    
     fluidRow(
       column(12,
         box(
@@ -487,15 +487,15 @@ server <- function(input, output, session) {
           solidHeader = TRUE,
           width = 12,
           div(style = "display: flex; gap: 15px; justify-content: center; padding: 10px;",
-            actionButton("scroll_to_table", "Cell Metadata",
+            actionButton("scroll_to_table", "Cell Metadata", 
                         icon = icon("table"),
                         class = "btn-primary",
                         style = "min-width: 150px;"),
-            actionButton("scroll_to_summary", "Metadata Summary",
+            actionButton("scroll_to_summary", "Metadata Summary", 
                         icon = icon("chart-bar"),
                         class = "btn-info",
                         style = "min-width: 150px;"),
-            actionButton("scroll_to_plots", "Distribution Plots",
+            actionButton("scroll_to_plots", "Distribution Plots", 
                         icon = icon("chart-area"),
                         class = "btn-success",
                         style = "min-width: 150px;")
@@ -529,18 +529,18 @@ server <- function(input, output, session) {
           status = "info",
           solidHeader = TRUE,
           width = 12,
-          selectInput("metadata_column", "Select Column:",
+          selectInput("metadata_column", "Select Column:", 
                       choices = colnames(obj@meta.data)),
           plotOutput("metadata_plot", height = "400px")
         )
       )
     )
   })
-
+  
   output$metadata_table <- renderDT({
     req(seurat_obj())
     obj <- seurat_obj()
-
+    
     datatable(
       obj@meta.data,
       options = list(
@@ -554,42 +554,42 @@ server <- function(input, output, session) {
       class = 'cell-border stripe'
     )
   })
-
+  
   output$metadata_summary <- renderPrint({
     req(seurat_obj())
     summary(seurat_obj()@meta.data)
   })
-
+  
   output$metadata_plot <- renderPlot({
     req(seurat_obj(), input$metadata_column)
-    viewseurat::plot_metadata_distribution(seurat_obj(), input$metadata_column, config)
+    plot_metadata_distribution(seurat_obj(), input$metadata_column, config)
   })
-
+  
   observeEvent(input$scroll_to_table, {
     shinyjs::runjs(
-      "var el = document.getElementById('metadata_table_box');
+      "var el = document.getElementById('metadata_table_box'); 
        if(el) { el.scrollIntoView({behavior: 'smooth', block: 'start'}); }"
     )
   })
-
+  
   observeEvent(input$scroll_to_summary, {
     shinyjs::runjs(
-      "var el = document.getElementById('metadata_summary_box');
+      "var el = document.getElementById('metadata_summary_box'); 
        if(el) { el.scrollIntoView({behavior: 'smooth', block: 'start'}); }"
     )
   })
-
+  
   observeEvent(input$scroll_to_plots, {
     shinyjs::runjs(
-      "var el = document.getElementById('metadata_plot_box');
+      "var el = document.getElementById('metadata_plot_box'); 
        if(el) { el.scrollIntoView({behavior: 'smooth', block: 'start'}); }"
     )
   })
-
+  
   output$graphs_ui <- renderUI({
     req(seurat_obj())
     obj <- seurat_obj()
-
+    
     if (length(obj@graphs) == 0) {
       return(box(
         title = "Graphs",
@@ -599,9 +599,9 @@ server <- function(input, output, session) {
         "No graphs found in this object."
       ))
     }
-
+    
     graph_names <- names(obj@graphs)
-
+    
     fluidRow(
       column(12,
         box(
@@ -623,22 +623,22 @@ server <- function(input, output, session) {
       )
     )
   })
-
+  
   output$graph_info <- renderPrint({
     req(seurat_obj(), input$selected_graph)
     obj <- seurat_obj()
     graph <- obj@graphs[[input$selected_graph]]
-
+    
     cat("Graph:", input$selected_graph, "\n")
     cat("Dimensions:", dim(graph), "\n")
     cat("Number of edges:", sum(graph > 0) / 2, "\n")
     cat("Sparsity:", 1 - (sum(graph > 0) / length(graph)), "\n")
   })
-
+  
   output$images_ui <- renderUI({
     req(seurat_obj())
     obj <- seurat_obj()
-
+    
     if (length(obj@images) == 0) {
       return(box(
         title = "Images",
@@ -648,14 +648,14 @@ server <- function(input, output, session) {
         "No spatial images found in this object."
       ))
     }
-
+    
     image_names <- names(obj@images)
-
+    
     # Get all available features (genes) and metadata columns for coloring
     all_features <- rownames(obj)
     metadata_cols <- colnames(obj@meta.data)
     color_choices <- c("None", metadata_cols, all_features)
-
+    
     fluidRow(
       column(12,
         box(
@@ -664,7 +664,7 @@ server <- function(input, output, session) {
           solidHeader = TRUE,
           width = 12,
           selectInput("selected_image", "Select Image:", choices = image_names),
-          selectInput("spatial_color_by", "Color by:",
+          selectInput("spatial_color_by", "Color by:", 
                       choices = color_choices,
                       selected = "None"),
           actionButton("plot_spatial", "Plot", class = "btn-primary"),
@@ -674,13 +674,13 @@ server <- function(input, output, session) {
       )
     )
   })
-
+  
   observeEvent(input$plot_spatial, {
     req(seurat_obj(), input$selected_image)
-
+    
     output$spatial_plot <- renderPlot({
       obj <- seurat_obj()
-
+      
       if (is.null(input$spatial_color_by) || input$spatial_color_by == "None") {
         SpatialPlot(obj, images = input$selected_image)
       } else {

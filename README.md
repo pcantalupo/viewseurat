@@ -66,6 +66,15 @@ install.packages("Seurat")
 shiny::runApp("path/to/view_seurat")
 
 # Or in RStudio, open app.R and click "Run App"
+
+# Or use the ViewSeurat function
+ViewSeurat()
+
+# View a Seurat object directly
+ViewSeurat(seurat_obj)
+
+# View with custom title
+ViewSeurat(seurat_obj, title = "My Analysis")
 ```
 
 2. Upload your Seurat object (.rds or .qs2 file) via drag-and-drop or file browser
@@ -126,15 +135,19 @@ point_size: 1.5
 ## Project Structure
 ```
 view_seurat/
-├── app.R                  # Main Shiny application
+├── app.R                  # Development launcher (runs inst/app/app.R)
 ├── config.yaml.example    # Example configuration
 ├── config.yaml            # Your custom config (create from example)
 ├── DESIGN.md             # Design documentation
 ├── README.md             # This file
-└── R/                    # Helper functions
+├── inst/
+│   └── app/
+│       └── app.R          # Main Shiny application (single source of truth)
+└── R/                    # Helper functions (exported by package)
     ├── seurat_utils.R     # Seurat object utilities
     ├── plot_functions.R   # Plotting functions
-    └── ui_modules.R       # Shiny UI modules
+    ├── ui_modules.R       # Shiny UI modules
+    └── view_seurat.R      # ViewSeurat() function
 ```
 
 ## Contributing

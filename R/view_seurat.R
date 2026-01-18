@@ -7,6 +7,9 @@
 #'
 #' @param obj A Seurat object to view. If NULL, launches the app with
 #'   the upload interface visible.
+#' @param title Character string for the application title displayed in the
+#'   dashboard header. If NULL (default), no custom title is shown. When a
+#'   file is uploaded via the interface, the filename is displayed automatically.
 #' @param launch.browser Logical indicating whether to open the app in
 #'   a browser window. Default is TRUE.
 #' @param port The TCP port that the application should listen on. If NULL
@@ -22,25 +25,28 @@
 #' @examples
 #' \dontrun{
 #' # View a Seurat object directly
-#' view_seurat(seurat_obj)
+#' ViewSeurat(seurat_obj)
+#'
+#' # View with custom title
+#' ViewSeurat(seurat_obj, title = "My Analysis")
 #'
 #' # Launch without an object (shows upload interface)
-#' view_seurat()
+#' ViewSeurat()
 #'
 #' # Specify port
-#' view_seurat(seurat_obj, port = 3838)
+#' ViewSeurat(seurat_obj, port = 3838)
 #' }
 #'
 #' @export
-view_seurat <- function(obj = NULL,
-                        launch.browser = TRUE,
-                        port = NULL,
-                        host = "127.0.0.1",
-                        config = NULL) {
+ViewSeurat <- function(obj = NULL,
+                       title = NULL,
+                       launch.browser = TRUE,
+                       port = NULL,
+                       host = "127.0.0.1",
+                       config = NULL) {
 
   # Validate Seurat object if provided
-
-if (!is.null(obj)) {
+  if (!is.null(obj)) {
     if (!inherits(obj, "Seurat")) {
       stop("Object must be a Seurat object", call. = FALSE)
     }
@@ -50,6 +56,7 @@ if (!is.null(obj)) {
   # Pass object and state to the Shiny app via shinyOptions
   shiny::shinyOptions(viewseurat.obj = obj)
   shiny::shinyOptions(viewseurat.preloaded = !is.null(obj))
+  shiny::shinyOptions(viewseurat.title = title)
   shiny::shinyOptions(viewseurat.config = config)
 
   # Find the app directory within the installed package
@@ -73,3 +80,7 @@ if (!is.null(obj)) {
   # Launch the app
   do.call(shiny::runApp, run_args)
 }
+
+#' @rdname ViewSeurat
+#' @export
+view_seurat <- ViewSeurat

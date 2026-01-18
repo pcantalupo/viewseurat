@@ -8,25 +8,42 @@ This is a Shiny dashboard application for viewing Seurat v5 single-cell RNA-seq 
 
 ## Running the Application
 
-Start the Shiny app:
-```r
-# In R console
-shiny::runApp()
+There are two ways to run the app:
 
-# Or in RStudio, open app.R and click "Run App"
+### Method 1: RStudio "Run App" (Development)
+```r
+# Open app.R in RStudio and click "Run App"
+# This runs inst/app/app.R via the launcher
+```
+
+### Method 2: ViewSeurat() Function (Packaged)
+```r
+# Install the package first
+devtools::install_local(".")
+
+# Then use the function
+ViewSeurat()  # Upload interface
+ViewSeurat(seurat_obj)  # Direct viewing
+ViewSeurat(seurat_obj, title = "My Analysis")  # Custom title
 ```
 
 The app accepts `.rds` or `.qs2` files containing Seurat v5 objects via drag-and-drop upload.
+
+### Important File Locations
+- **Root `app.R`**: Development launcher that runs `shiny::runApp("inst/app")`
+- **`inst/app/app.R`**: Actual Shiny app (single source of truth)
+- When making changes, **ONLY edit `inst/app/app.R`**, not the root launcher
 
 ## Architecture
 
 ### Application Structure
 
 The app follows a modular Shiny architecture:
-- `app.R` - Main application entry point containing UI definition and server logic
+- `inst/app/app.R` - Main application entry point containing UI definition and server logic
 - `R/seurat_utils.R` - Utilities for extracting and processing Seurat object data
 - `R/plot_functions.R` - Plotting functions for visualizations
 - `R/ui_modules.R` - Reusable UI module functions for assay panels
+- `R/view_seurat.R` - ViewSeurat() exported function for programmatic use
 
 ### Configuration System
 
