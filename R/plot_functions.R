@@ -10,6 +10,7 @@
 #' @return A plotly object
 #' @keywords internal
 #' @export
+#' @importFrom dplyr %>%
 plot_reduction_interactive <- function(obj, reduction_name, color_by = "None",
                                        dims = c(1, 2), config) {
   embeddings <- extract_embeddings(obj, reduction_name, dims)
@@ -136,58 +137,6 @@ plot_metadata_distribution <- function(obj, column, config) {
   return(p)
 }
 
-#' Plot Feature Heatmap
-#'
-#' Create a heatmap of top variable features.
-#'
-#' @param obj A Seurat object
-#' @param assay_name Name of the assay
-#' @param features Optional character vector of features to plot
-#' @param n_cells Number of cells to sample
-#' @param config Configuration list with plot settings
-#' @return A ggplot object or NULL
-#' @keywords internal
-#' @export
-plot_feature_heatmap <- function(obj, assay_name, features = NULL, n_cells = 100, config) {
-  DefaultAssay(obj) <- assay_name
-
-  if (is.null(features)) {
-    features <- get_top_variable_features(obj, assay_name, n = 20)
-  }
-
-  if (is.null(features) || length(features) == 0) {
-    return(NULL)
-  }
-
-  if (ncol(obj) > n_cells) {
-    cells_to_plot <- sample(colnames(obj), n_cells)
-  } else {
-    cells_to_plot <- colnames(obj)
-  }
-
-  data_matrix <- GetAssayData(obj, layer = "scale.data")
-
-  if (nrow(data_matrix) == 0) {
-    data_matrix <- GetAssayData(obj, layer = "data")
-  }
-
-  features <- intersect(features, rownames(data_matrix))
-  if (length(features) == 0) {
-    return(NULL)
-  }
-
-  plot_data <- as.matrix(data_matrix[features, cells_to_plot, drop = FALSE])
-
-  p <- DoHeatmap(
-    obj,
-    features = features,
-    cells = cells_to_plot,
-    size = 3
-  ) +
-    ggplot2::theme(axis.text.y = ggplot2::element_text(size = 8))
-
-  return(p)
-}
 
 #' Plot QC Metrics
 #'

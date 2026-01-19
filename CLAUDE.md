@@ -13,7 +13,7 @@ There are two ways to run the app:
 ### Method 1: RStudio "Run App" (Development)
 ```r
 # Open app.R in RStudio and click "Run App"
-# This runs inst/app/app.R via the launcher
+# This sources all R/ files directly and launches shinyApp()
 ```
 
 ### Method 2: ViewSeurat() Function (Packaged)
@@ -29,21 +29,45 @@ ViewSeurat(seurat_obj, title = "My Analysis")  # Custom title
 
 The app accepts `.rds` or `.qs2` files containing Seurat v5 objects via drag-and-drop upload.
 
-### Important File Locations
-- **Root `app.R`**: Development launcher that runs `shiny::runApp("inst/app")`
-- **`inst/app/app.R`**: Actual Shiny app (single source of truth)
-- When making changes, **ONLY edit `inst/app/app.R`**, not the root launcher
+## Development Commands
+
+```r
+# Load package for development (use in R console)
+devtools::load_all()
+
+# Regenerate documentation after editing roxygen comments
+devtools::document()
+
+# Run R CMD check
+devtools::check()
+
+# Install locally
+devtools::install_local(".")
+
+# Build package tarball
+devtools::build()
+```
+
+### File Organization (Mastering Shiny Pattern)
+
+This package follows the pattern from Hadley Wickham's "Mastering Shiny" book:
+
+- **`app.R` (root)**: Development launcher - sources R/ files and calls `shinyApp(ui, server)`
+- **`R/shiny_app.R`**: Contains `viewseurat_ui()` and `viewseurat_server()` that define the Shiny app
+- **`R/view_seurat.R`**: Contains `ViewSeurat()` exported function that wraps the app
+
+When making changes to the app, **edit `R/shiny_app.R`**.
 
 ## Architecture
 
 ### Application Structure
 
-The app follows a modular Shiny architecture:
-- `inst/app/app.R` - Main application entry point containing UI definition and server logic
+The app follows a modular Shiny architecture with the app wrapped in a function:
+- `R/shiny_app.R` - `viewseurat_app()` function containing UI definition and server logic
 - `R/seurat_utils.R` - Utilities for extracting and processing Seurat object data
 - `R/plot_functions.R` - Plotting functions for visualizations
 - `R/ui_modules.R` - Reusable UI module functions for assay panels
-- `R/view_seurat.R` - ViewSeurat() exported function for programmatic use
+- `R/view_seurat.R` - `ViewSeurat()` exported function for programmatic use
 
 ### Configuration System
 
@@ -102,9 +126,9 @@ For large datasets, sampling is applied automatically based on config limits.
 
 ### Adding a New Viewer Tab
 
-1. Add menuItem to sidebar in `dashboardSidebar()` in app.R
-2. Add tabItem to `tabItems()` in dashboardBody in app.R
-3. Create corresponding `output$[name]_ui <- renderUI({})` in server function
+1. Add menuItem to sidebar in `dashboardSidebar()` in `R/shiny_app.R`
+2. Add tabItem to `tabItems()` in dashboardBody in `R/shiny_app.R`
+3. Create corresponding `output$[name]_ui <- renderUI({})` in the server function
 4. Implement UI generation logic that checks for data availability
 
 ### Adding Configuration Options
@@ -118,7 +142,7 @@ For large datasets, sampling is applied automatically based on config limits.
 Always check for component existence before rendering:
 ```r
 if (length(obj@reductions) == 0) {
-  return(box(title = "Reductions", status = "warning",
+  return(shinydashboard::box(title = "Reductions", status = "warning",
              "No dimensional reductions found"))
 }
 ```
@@ -131,6 +155,13 @@ Spatial plots use Seurat's built-in functions:
 - Check `input$spatial_color_by` against metadata columns vs. feature names to determine which function to use
 
 ## Key Functions Reference
+
+**shiny_app.R:**
+- `viewseurat_ui()` - Returns the Shiny UI (dashboardPage)
+- `viewseurat_server()` - The Shiny server function
+
+**view_seurat.R:**
+- `ViewSeurat()` / `view_seurat()` - Exported function to launch the app
 
 **seurat_utils.R:**
 - `load_config()` - Load and merge user config with defaults
@@ -151,7 +182,7 @@ Spatial plots use Seurat's built-in functions:
 
 ## File Upload Handling
 
-- Drag-and-drop implemented via JavaScript in app.R (lines 64-126)
+- Drag-and-drop implemented via JavaScript in `R/shiny_app.R`
 - Accepts `.rds` (via `readRDS()`) and `.qs2` (via `qs2::qs_read()`)
 - Max file size controlled by `options(shiny.maxRequestSize = config$max_upload_size_mb * 1024^2)`
 - Validation: Check file extension, verify object is class "Seurat"
@@ -159,7 +190,7 @@ Spatial plots use Seurat's built-in functions:
 ## Performance Considerations
 
 - Default max upload: 10GB (configurable)
-- Matrix display: Sample 50 rows × 20 cols by default (configurable)
+- Matrix display: Sample 50 rows x 20 cols by default (configurable)
 - Reduction plots: Use plotly for efficient rendering of large point clouds
 - Heatmaps: Limited to 100 cells by default in `plot_feature_heatmap()`
 - All DataTables use server-side pagination with configurable `rows_per_page`

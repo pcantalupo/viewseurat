@@ -25,7 +25,10 @@ Imports:
     Matrix,
     qs2,
     shinyjs,
-    yaml
+    yaml,
+    methods,
+    stats,
+    utils
 Suggests:
     testthat (>= 3.0.0)
 RoxygenNote: 7.3.3

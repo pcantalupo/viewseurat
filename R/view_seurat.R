@@ -59,16 +59,12 @@ ViewSeurat <- function(obj = NULL,
   shiny::shinyOptions(viewseurat.title = title)
   shiny::shinyOptions(viewseurat.config = config)
 
-  # Find the app directory within the installed package
-  app_dir <- system.file("app", package = "viewseurat")
-  if (app_dir == "") {
-    stop("Could not find app directory. Is the package installed correctly?",
-         call. = FALSE)
-  }
+  # Create the app object
+  app <- viewseurat_app()
 
   # Build run arguments
   run_args <- list(
-    appDir = app_dir,
+    appDir = app,
     launch.browser = launch.browser,
     host = host
   )

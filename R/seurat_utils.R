@@ -64,6 +64,7 @@ load_config <- function() {
 #' @return A list with assay metadata including dimensions and available layers
 #' @keywords internal
 #' @export
+#' @importFrom Seurat GetAssayData VariableFeatures
 get_assay_info <- function(obj, assay_name) {
   assay <- obj@assays[[assay_name]]
 
@@ -158,6 +159,7 @@ get_sparsity_info <- function(matrix) {
 #' @return A data frame with cell names and embedding coordinates
 #' @keywords internal
 #' @export
+#' @importFrom SeuratObject Embeddings
 extract_embeddings <- function(obj, reduction_name, dims = c(1, 2)) {
   embeddings <- Embeddings(obj, reduction = reduction_name)
 
@@ -182,6 +184,7 @@ extract_embeddings <- function(obj, reduction_name, dims = c(1, 2)) {
 #' @return Character vector of feature names
 #' @keywords internal
 #' @export
+#' @importFrom Seurat VariableFeatures DefaultAssay<-
 get_top_variable_features <- function(obj, assay_name, n = 20) {
   DefaultAssay(obj) <- assay_name
   var_features <- VariableFeatures(obj)
@@ -253,6 +256,7 @@ validate_seurat_object <- function(obj) {
 #' @return Matrix data or NULL if not available
 #' @keywords internal
 #' @export
+#' @importFrom Seurat GetAssayData DefaultAssay
 get_assay_data_safe <- function(obj, assay_name, layer) {
   tryCatch({
     DefaultAssay(obj) <- assay_name
@@ -270,6 +274,7 @@ get_assay_data_safe <- function(obj, assay_name, layer) {
 #' @return The name of the matching metadata column, or "Unknown"
 #' @keywords internal
 #' @export
+#' @importFrom Seurat Idents
 FindIdentLabel <- function(seurat) {
   # Find the metadata column name that matches Idents
   ident_values <- as.character(Idents(seurat))
@@ -290,6 +295,7 @@ FindIdentLabel <- function(seurat) {
 #' @param seurat A Seurat object
 #' @return A list with formatted information about the object
 #' @export
+#' @importFrom Seurat DefaultAssay VariableFeatures Idents
 SeuratInfo <- function(seurat) {
   output <- list()
 
