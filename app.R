@@ -27,7 +27,7 @@ library(shinyjs)
 source("R/seurat_utils.R")
 source("R/plot_functions.R")
 source("R/ui_modules.R")
-source("R/shiny_app.R")
+source("R/shinyapp_components.R")
 
 # Load config and set max upload size
 config <- load_config()

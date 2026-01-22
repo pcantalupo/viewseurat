@@ -1,6 +1,6 @@
 #' View a Seurat Object Interactively
 #'
-#' Launch an interactive Shiny dashboard to explore a Seurat v5 object.
+#' Launch an interactive Shiny dashboard to explore a Seurat object.
 #' When called with an object, the Upload tab is hidden and the viewer
 #' navigates directly to the Overview tab. When called without an object,
 #' the full upload interface is shown.
@@ -77,6 +77,3 @@ ViewSeurat <- function(obj = NULL,
   do.call(shiny::runApp, run_args)
 }
 
-#' @rdname ViewSeurat
-#' @export
-view_seurat <- ViewSeurat
