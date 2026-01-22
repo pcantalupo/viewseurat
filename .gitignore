@@ -3,5 +3,6 @@
 .RData
 .Ruserdata
 .claude/
+*.code-workspace
 docs/
 local/
