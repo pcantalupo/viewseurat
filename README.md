@@ -48,13 +48,11 @@ This dashboard provides a comprehensive graphical interface to view all componen
 
 ### R Packages
 ```r
-install.packages(c("shiny", "shinydashboard", "DT", "ggplot2", 
-                   "plotly", "dplyr", "yaml", "shinycssloaders", "qs2", "shinyjs"))
-                   
+install.packages(c("shiny", "shinydashboard", "DT", "ggplot2",
+                   "plotly", "dplyr", "yaml", "qs2", "shinyjs", "Matrix"))
+
 # Seurat v5
 install.packages("Seurat")
-# or from GitHub for latest version:
-# remotes::install_github("satijalab/seurat", "seurat5")
 ```
 
 ## Usage
@@ -81,7 +79,7 @@ ViewSeurat(seurat_obj, title = "My Analysis")
 3. Explore the various components using the sidebar navigation
 
 ### Custom Configuration
-1. Copy `config.yaml.example` to `config.yaml`
+1. Copy `inst/extdata/config.yaml.example` to `config.yaml` in the app directory
 2. Edit `config.yaml` with your preferences:
    - Display limits
    - Color schemes
@@ -111,7 +109,7 @@ point_size: 1.5
 
 ### Configuration File (Optional)
 - **File**: `config.yaml` in the app directory
-- **Template**: Use `config.yaml.example` as starting point
+- **Template**: Copy from `inst/extdata/config.yaml.example`
 - **Required**: No, app will use defaults if not present
 
 ## Troubleshooting
@@ -134,20 +132,18 @@ point_size: 1.5
 
 ## Project Structure
 ```
-view_seurat/
-├── app.R                  # Development launcher (runs inst/app/app.R)
-├── config.yaml.example    # Example configuration
-├── config.yaml            # Your custom config (create from example)
-├── DESIGN.md             # Design documentation
-├── README.md             # This file
-├── inst/
-│   └── app/
-│       └── app.R          # Main Shiny application (single source of truth)
-└── R/                    # Helper functions (exported by package)
-    ├── seurat_utils.R     # Seurat object utilities
-    ├── plot_functions.R   # Plotting functions
-    ├── ui_modules.R       # Shiny UI modules
-    └── view_seurat.R      # ViewSeurat() function
+viewseurat/
+├── app.R                           # Development launcher (sources R/, runs shinyApp)
+├── DESCRIPTION                     # Package metadata
+├── R/
+│   ├── shinyapp_components.R       # Main UI and server logic
+│   ├── ViewSeurat.R                # ViewSeurat() exported function
+│   ├── seurat_utils.R              # Seurat object utilities
+│   ├── plot_functions.R            # Plotting functions
+│   └── ui_modules.R                # Shiny UI modules
+└── inst/
+    └── extdata/
+        └── config.yaml.example     # Example configuration
 ```
 
 ## Contributing
@@ -163,4 +159,4 @@ If you use this tool, please cite:
 ## Support
 For issues specific to:
 - **Seurat objects**: See [Seurat documentation](https://satijalab.org/seurat/)
-- **This viewer**: Check DESIGN.md for technical details
+- **This viewer**: Check CLAUDE.md for technical details
