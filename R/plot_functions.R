@@ -52,6 +52,65 @@ plot_reduction_interactive <- function(obj, reduction_name, color_by = "None",
     plotly::layout(hovermode = 'closest')
 }
 
+#' Plot Reduction Static
+#'
+#' Create a static ggplot scatter plot for dimensional reduction.
+#' Faster than interactive version for large datasets.
+#'
+#' @param obj A Seurat object
+#' @param reduction_name Name of the reduction to plot
+#' @param color_by Metadata column to color by, or "None"
+#' @param dims Vector of two dimensions to plot
+#' @param config Configuration list with plot settings
+#' @return A ggplot object
+#' @keywords internal
+#' @export
+plot_reduction_static <- function(obj, reduction_name, color_by = "None",
+                                  dims = c(1, 2), config) {
+  embeddings <- extract_embeddings(obj, reduction_name, dims)
+  plot_data <- cbind(embeddings, obj@meta.data)
+
+  # Sample if too many cells for performance
+  if (nrow(plot_data) > config$max_cells_display) {
+    set.seed(42)
+    sample_idx <- sample(nrow(plot_data), config$max_cells_display)
+    plot_data <- plot_data[sample_idx, ]
+  }
+
+  p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = Dim1, y = Dim2)) +
+    ggplot2::theme_minimal() +
+    ggplot2::labs(
+      x = paste0(reduction_name, "_", dims[1]),
+      y = paste0(reduction_name, "_", dims[2]),
+      title = paste(toupper(reduction_name), "Plot")
+    )
+
+  if (color_by != "None" && color_by %in% colnames(obj@meta.data)) {
+    if (is.numeric(obj@meta.data[[color_by]])) {
+      p <- p + ggplot2::geom_point(
+        ggplot2::aes_string(color = color_by),
+        size = config$point_size,
+        alpha = config$point_alpha
+      ) +
+        ggplot2::scale_color_viridis_c(option = config$color_palette)
+    } else {
+      p <- p + ggplot2::geom_point(
+        ggplot2::aes_string(color = color_by),
+        size = config$point_size,
+        alpha = config$point_alpha
+      )
+    }
+  } else {
+    p <- p + ggplot2::geom_point(
+      size = config$point_size,
+      alpha = config$point_alpha,
+      color = "steelblue"
+    )
+  }
+
+  return(p)
+}
+
 #' Plot Feature Expression
 #'
 #' Create a scatter plot showing expression of a single feature.

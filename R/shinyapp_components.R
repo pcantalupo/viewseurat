@@ -445,7 +445,7 @@ viewseurat_server <- function(input, output, session) {
           status = "info",
           solidHeader = TRUE,
           width = 12,
-          plotly::plotlyOutput("reduction_plot", height = "600px")
+          shiny::plotOutput("reduction_plot", height = "600px")
         )
       ),
       shiny::column(12,
@@ -477,8 +477,8 @@ viewseurat_server <- function(input, output, session) {
   shiny::observeEvent(input$plot_reduction, {
     shiny::req(seurat_obj(), input$selected_reduction)
 
-    output$reduction_plot <- plotly::renderPlotly({
-      plot_reduction_interactive(
+    output$reduction_plot <- shiny::renderPlot({
+      plot_reduction_static(
         seurat_obj(),
         input$selected_reduction,
         input$color_by,
