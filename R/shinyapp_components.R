@@ -364,6 +364,7 @@ viewseurat_server <- function(input, output, session) {
     shiny::req(seurat_obj())
     obj <- seurat_obj()
     assay_names <- names(obj@assays)
+    default_assay <- Seurat::DefaultAssay(obj)
 
     do.call(shinydashboard::tabBox, c(
       list(
@@ -372,8 +373,14 @@ viewseurat_server <- function(input, output, session) {
         title = "Assays"
       ),
       lapply(assay_names, function(assay_name) {
+        # Add "(default)" indicator to the default assay tab
+        tab_label <- if (assay_name == default_assay) {
+          paste0(assay_name, " (default)")
+        } else {
+          assay_name
+        }
         shiny::tabPanel(
-          assay_name,
+          tab_label,
           assay_panel_ui(assay_name, obj)
         )
       })
@@ -406,6 +413,14 @@ viewseurat_server <- function(input, output, session) {
 
     reduction_names <- names(obj@reductions)
 
+    # Get assay of origin for each reduction to display in dropdown
+    # In selectInput, names are displayed and values are returned
+    reduction_choices <- reduction_names
+    names(reduction_choices) <- sapply(reduction_names, function(name) {
+      assay_used <- obj[[name]]@assay.used
+      paste0(name, " (", assay_used, ")")
+    })
+
     shiny::fluidRow(
       shiny::column(12,
         shinydashboard::box(
@@ -414,7 +429,7 @@ viewseurat_server <- function(input, output, session) {
           solidHeader = TRUE,
           width = 12,
           shiny::selectInput("selected_reduction", "Select Reduction:",
-                      choices = reduction_names,
+                      choices = reduction_choices,
                       selected = if(config$default_reduction %in% reduction_names)
                         config$default_reduction else reduction_names[1]),
           shiny::selectInput("color_by", "Color by:",
