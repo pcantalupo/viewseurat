@@ -44,7 +44,7 @@ When making changes to the app, **edit `R/shinyapp_components.R`** since it cont
 ### Application Structure
 
 The app follows a modular Shiny architecture with the app wrapped in a function:
-- `R/shinyapp_components.R` - `viewseurat_app()` function containing UI definition and server logic
+- `R/shinyapp_components.R` - `viewseurat_ui()` and `viewseurat_server()` defining the Shiny app
 - `R/seurat_utils.R` - Utilities for extracting and processing Seurat object data
 - `R/plot_functions.R` - Plotting functions for visualizations
 - `R/ui_modules.R` - Reusable UI module functions for assay panels
@@ -78,6 +78,14 @@ The viewer displays these Seurat v5 components:
 - **Graphs** (`obj@graphs`): Neighbor graphs for clustering
 - **Images** (`obj@images`): Spatial transcriptomics tissue images
 
+
+### Working with Spatial Data
+
+Spatial plots use Seurat's built-in functions:
+- `SpatialPlot()` for basic tissue visualization with metadata overlay
+- `SpatialFeaturePlot()` for gene expression overlay on tissue images
+- Check `input$spatial_color_by` against metadata columns vs. feature names to determine which function to use
+
 ### Data Layer Access (Seurat v5)
 
 Seurat v5 uses a `layers` slot instead of direct slots. Access data using:
@@ -94,6 +102,8 @@ Most Seurat data uses sparse matrices (dgCMatrix):
 - Use `get_sparsity_info()` to calculate memory and sparsity statistics
 - Convert to dense matrix only for small samples: `as.matrix(sparse_matrix[rows, cols])`
 
+## Common Development Patterns
+
 ### Plot Rendering Strategy
 
 Two rendering approaches:
@@ -102,20 +112,12 @@ Two rendering approaches:
 
 For large datasets, sampling is applied automatically based on config limits.
 
-## Common Development Patterns
-
 ### Adding a New Viewer Tab
 
-1. Add menuItem to sidebar in `dashboardSidebar()` in `R/shiny_app.R`
-2. Add tabItem to `tabItems()` in dashboardBody in `R/shiny_app.R`
+1. Add menuItem to sidebar in `dashboardSidebar()` in `R/shinyapp_components.R`
+2. Add tabItem to `tabItems()` in dashboardBody in `R/shinyapp_components.R`
 3. Create corresponding `output$[name]_ui <- renderUI({})` in the server function
 4. Implement UI generation logic that checks for data availability
-
-### Adding Configuration Options
-
-1. Add default to `default_config` list in `load_config()` (seurat_utils.R)
-2. Document in config.yaml.example with comments
-3. Access via `config$[option_name]` in server functions
 
 ### Handling Missing Data
 
@@ -127,55 +129,22 @@ if (length(obj@reductions) == 0) {
 }
 ```
 
-### Working with Spatial Data
+## Miscellaneous Details
+### File Upload Handling
 
-Spatial plots use Seurat's built-in functions:
-- `SpatialPlot()` for basic tissue visualization with metadata overlay
-- `SpatialFeaturePlot()` for gene expression overlay on tissue images
-- Check `input$spatial_color_by` against metadata columns vs. feature names to determine which function to use
-
-## Key Functions Reference
-
-**shiny_app.R:**
-- `viewseurat_ui()` - Returns the Shiny UI (dashboardPage)
-- `viewseurat_server()` - The Shiny server function
-
-**view_seurat.R:**
-- `ViewSeurat()` / `view_seurat()` - Exported function to launch the app
-
-**seurat_utils.R:**
-- `load_config()` - Load and merge user config with defaults
-- `get_assay_info()` - Extract assay metadata (dimensions, available layers)
-- `get_matrix_sample()` - Random sample rows/cols from matrix for display
-- `get_sparsity_info()` - Calculate sparsity statistics for sparse matrices
-- `SeuratInfo()` - Generate comprehensive object summary (mimics Seurat's print output)
-- `FindIdentLabel()` - Find metadata column matching active Idents
-
-**plot_functions.R:**
-- `plot_reduction_interactive()` - Create interactive plotly scatter plot for reductions
-- `plot_metadata_distribution()` - Histogram/bar plot for metadata columns
-- `plot_feature_heatmap()` - Heatmap of top variable features
-
-**ui_modules.R:**
-- `assay_panel_ui()` - Generate UI for single assay tab
-- `assay_panel_server()` - Server logic for assay data rendering
-
-## File Upload Handling
-
-- Drag-and-drop implemented via JavaScript in `R/shiny_app.R`
+- Drag-and-drop implemented via JavaScript in `R/shinyapp_components.R`
 - Accepts `.rds` (via `readRDS()`) and `.qs2` (via `qs2::qs_read()`)
 - Max file size controlled by `options(shiny.maxRequestSize = config$max_upload_size_mb * 1024^2)`
 - Validation: Check file extension, verify object is class "Seurat"
 
-## Performance Considerations
+### Performance Considerations
 
 - Default max upload: 10GB (configurable)
 - Matrix display: Sample 50 rows x 20 cols by default (configurable)
 - Reduction plots: Use plotly for efficient rendering of large point clouds
-- Heatmaps: Limited to 100 cells by default in `plot_feature_heatmap()`
 - All DataTables use server-side pagination with configurable `rows_per_page`
 
-## Important Constraints
+### Important Constraints
 
 - **Read-only viewer**: Do NOT add analysis functions, data transformations, or object modifications
 - **Seurat v5 only**: Code assumes v5 object structure (layers vs. direct slots)
