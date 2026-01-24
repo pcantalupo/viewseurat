@@ -10,74 +10,56 @@ This is a Shiny dashboard application for viewing Seurat v5 single-cell RNA-seq 
 
 There are two ways to run the app:
 
-### Method 1: RStudio "Run App" (Development)
+### Method 1: RStudio "Run App" (Easy usage without installation)
 ```r
 # Open app.R in RStudio and click "Run App"
 # This sources all R/ files directly and launches shinyApp()
 ```
 
-### Method 2: ViewSeurat() Function (Packaged)
+### Method 2: ViewSeurat() Function (Interactive use / Development)
 ```r
 # Install the package first
 devtools::install_local(".")
 
 # Then use the function
-ViewSeurat()  # Upload interface
 ViewSeurat(seurat_obj)  # Direct viewing
 ViewSeurat(seurat_obj, title = "My Analysis")  # Custom title
+ViewSeurat()  # Launch app with file upload prompt
 ```
 
 The app accepts `.rds` or `.qs2` files containing Seurat v5 objects via drag-and-drop upload.
-
-## Development Commands
-
-```r
-# Load package for development (use in R console)
-devtools::load_all()
-
-# Regenerate documentation after editing roxygen comments
-devtools::document()
-
-# Run R CMD check
-devtools::check()
-
-# Install locally
-devtools::install_local(".")
-
-# Build package tarball
-devtools::build()
-```
 
 ### File Organization (Mastering Shiny Pattern)
 
 This package follows the pattern from Hadley Wickham's "Mastering Shiny" book:
 
-- **`app.R` (root)**: Development launcher - sources R/ files and calls `shinyApp(ui, server)`
-- **`R/shiny_app.R`**: Contains `viewseurat_ui()` and `viewseurat_server()` that define the Shiny app
-- **`R/view_seurat.R`**: Contains `ViewSeurat()` exported function that wraps the app
+- **`app.R` (root)**: Manual launcher - sources R/ files and calls `shinyApp(ui, server)`
+- **`R/shinyapp_components.R`**: Contains `viewseurat_ui()` and `viewseurat_server()` that define the Shiny app
+- **`R/ViewSeurat.R`**: Contains `ViewSeurat()` exported function that wraps the app
 
-When making changes to the app, **edit `R/shiny_app.R`**.
+When making changes to the app, **edit `R/shinyapp_components.R`** since it contains the ui and server logic.
 
 ## Architecture
 
 ### Application Structure
 
 The app follows a modular Shiny architecture with the app wrapped in a function:
-- `R/shiny_app.R` - `viewseurat_app()` function containing UI definition and server logic
+- `R/shinyapp_components.R` - `viewseurat_app()` function containing UI definition and server logic
 - `R/seurat_utils.R` - Utilities for extracting and processing Seurat object data
 - `R/plot_functions.R` - Plotting functions for visualizations
 - `R/ui_modules.R` - Reusable UI module functions for assay panels
-- `R/view_seurat.R` - `ViewSeurat()` exported function for programmatic use
+- `R/ViewSeurat.R` - `ViewSeurat()` exported function that wraps the app
 
 ### Configuration System
 
 Configuration is managed through YAML:
-- `config.yaml.example` - Template with all available options and defaults
-- `config.yaml` - User configuration (created from example, gitignored)
+- `inst/extdata/config.yaml.example` - Template with all available options and defaults
 - `load_config()` in seurat_utils.R loads config with fallback to defaults
 - Config controls: display limits, plot aesthetics, performance settings, file upload size
 
 Access config in server functions via the `config` variable passed as a parameter.
+
+The configuration system is not fully implemented for user overrides yet.
 
 ### Key Reactive Flow
 
@@ -100,9 +82,7 @@ The viewer displays these Seurat v5 components:
 
 Seurat v5 uses a `layers` slot instead of direct slots. Access data using:
 ```r
-GetAssayData(obj, layer = "counts")     # Raw counts
-GetAssayData(obj, layer = "data")       # Normalized data
-GetAssayData(obj, layer = "scale.data") # Scaled data
+GetAssayData(obj, layer = "counts")     # Raw counts, or "data", "scale.data"
 ```
 
 The `get_assay_data_safe()` function wraps this with error handling.
