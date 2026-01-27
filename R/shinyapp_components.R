@@ -222,33 +222,40 @@ viewseurat_server <- function(input, output, session) {
     shiny::req(input$seurat_file)
 
     tryCatch({
-      # Detect file type and load accordingly
-      file_ext <- tolower(tools::file_ext(input$seurat_file$name))
+      shiny::withProgress(message = "Loading Seurat object...", value = 0, {
+        # Detect file type and load accordingly
+        file_ext <- tolower(tools::file_ext(input$seurat_file$name))
 
-      if (file_ext == "rds") {
-        obj <- readRDS(input$seurat_file$datapath)
-      } else if (file_ext == "qs2") {
-        obj <- qs2::qs_read(input$seurat_file$datapath)
-      } else {
-        stop("Unsupported file format. Please use .rds or .qs2 files.")
-      }
+        shiny::incProgress(0.1, detail = "Reading file from disk...")
+        if (file_ext == "rds") {
+          obj <- readRDS(input$seurat_file$datapath)
+        } else if (file_ext == "qs2") {
+          obj <- qs2::qs_read(input$seurat_file$datapath)
+        } else {
+          stop("Unsupported file format. Please use .rds or .qs2 files.")
+        }
 
-      if (!inherits(obj, "Seurat")) {
-        stop("File does not contain a valid Seurat object")
-      }
+        shiny::incProgress(0.6, detail = "Validating Seurat object...")
+        if (!inherits(obj, "Seurat")) {
+          stop("File does not contain a valid Seurat object")
+        }
 
-      seurat_obj(obj)
-      file_size_bytes(input$seurat_file$size)
-      uploaded_filename(input$seurat_file$name)
+        shiny::incProgress(0.2, detail = "Preparing viewer...")
+        seurat_obj(obj)
+        file_size_bytes(input$seurat_file$size)
+        uploaded_filename(input$seurat_file$name)
 
-      output$upload_status <- shiny::renderText({
-        paste0(
-          "Successfully loaded Seurat object\n",
-          "File type: ", toupper(file_ext), "\n",
-          "Cells: ", ncol(obj), "\n",
-          "Assays: ", paste(names(obj@assays), collapse = ", "), "\n",
-          "Reductions: ", paste(names(obj@reductions), collapse = ", ")
-        )
+        output$upload_status <- shiny::renderText({
+          paste0(
+            "Successfully loaded Seurat object\n",
+            "File type: ", toupper(file_ext), "\n",
+            "Cells: ", ncol(obj), "\n",
+            "Assays: ", paste(names(obj@assays), collapse = ", "), "\n",
+            "Reductions: ", paste(names(obj@reductions), collapse = ", ")
+          )
+        })
+
+        shiny::incProgress(0.1, detail = "Done!")
       })
 
       shiny::showNotification("Seurat object loaded successfully!", type = "message")
@@ -291,6 +298,8 @@ viewseurat_server <- function(input, output, session) {
           status = "info",
           solidHeader = TRUE,
           width = 12,
+          collapsible = TRUE,
+          collapsed = TRUE,
           shiny::verbatimTextOutput("size_info_output")
         )
       )
@@ -387,15 +396,48 @@ viewseurat_server <- function(input, output, session) {
     ))
   })
 
-  shiny::observe({
+  # Lazy initialization: only set up assay panel server when its tab is selected
+  initialized_assays <- shiny::reactiveVal(character(0))
+
+  shiny::observeEvent(input$assay_tabs, {
     shiny::req(seurat_obj())
     obj <- seurat_obj()
     assay_names <- names(obj@assays)
+    default_assay <- Seurat::DefaultAssay(obj)
 
-    lapply(assay_names, function(assay_name) {
-      assay_panel_server(assay_name, obj, config, output)
-    })
+    # Map tab label back to assay name (tab labels may include " (default)")
+    selected_tab <- input$assay_tabs
+    selected_assay <- NULL
+    for (assay_name in assay_names) {
+      tab_label <- if (assay_name == default_assay) {
+        paste0(assay_name, " (default)")
+      } else {
+        assay_name
+      }
+      if (tab_label == selected_tab) {
+        selected_assay <- assay_name
+        break
+      }
+    }
+
+    if (!is.null(selected_assay) && !selected_assay %in% initialized_assays()) {
+      assay_panel_server(selected_assay, obj, config, output)
+      initialized_assays(c(initialized_assays(), selected_assay))
+    }
   })
+
+  # Initialize the default assay when the Assays tab is first visited
+  shiny::observeEvent(input$sidebar, {
+    if (input$sidebar == "assays") {
+      shiny::req(seurat_obj())
+      obj <- seurat_obj()
+      default_assay <- Seurat::DefaultAssay(obj)
+      if (!default_assay %in% initialized_assays()) {
+        assay_panel_server(default_assay, obj, config, output)
+        initialized_assays(c(initialized_assays(), default_assay))
+      }
+    }
+  }, ignoreInit = TRUE)
 
   output$reductions_ui <- shiny::renderUI({
     shiny::req(seurat_obj())
@@ -445,7 +487,7 @@ viewseurat_server <- function(input, output, session) {
           status = "info",
           solidHeader = TRUE,
           width = 12,
-          shiny::plotOutput("reduction_plot", height = "600px")
+          shinycssloaders::withSpinner(shiny::plotOutput("reduction_plot", height = "600px"))
         )
       ),
       shiny::column(12,
@@ -456,7 +498,7 @@ viewseurat_server <- function(input, output, session) {
           width = 12,
           collapsible = TRUE,
           collapsed = TRUE,
-          DT::DTOutput("embeddings_table")
+          shinycssloaders::withSpinner(DT::DTOutput("embeddings_table"))
         )
       )
     )
@@ -497,7 +539,7 @@ viewseurat_server <- function(input, output, session) {
           scrollX = TRUE
         )
       )
-    })
+    }, server = TRUE)
   })
 
   output$metadata_ui <- shiny::renderUI({
@@ -534,7 +576,7 @@ viewseurat_server <- function(input, output, session) {
           status = "primary",
           solidHeader = TRUE,
           width = 12,
-          DT::DTOutput("metadata_table")
+          shinycssloaders::withSpinner(DT::DTOutput("metadata_table"))
         )
       ),
       shiny::column(12,
@@ -578,7 +620,7 @@ viewseurat_server <- function(input, output, session) {
       filter = 'top',
       class = 'cell-border stripe'
     )
-  })
+  }, server = TRUE)
 
   output$metadata_summary <- shiny::renderPrint({
     shiny::req(seurat_obj())

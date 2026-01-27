@@ -15,7 +15,18 @@ plot_reduction_interactive <- function(obj, reduction_name, color_by = "None",
                                        dims = c(1, 2), config) {
   embeddings <- extract_embeddings(obj, reduction_name, dims)
 
-  plot_data <- cbind(embeddings, obj@meta.data)
+  # Sample before joining to avoid copying all metadata for all cells
+  if (nrow(embeddings) > config$max_cells_display) {
+    set.seed(42)
+    sample_idx <- sample(nrow(embeddings), config$max_cells_display)
+    embeddings <- embeddings[sample_idx, , drop = FALSE]
+  }
+
+  # Only join the single column needed for coloring
+  if (color_by != "None" && color_by %in% colnames(obj@meta.data)) {
+    embeddings[[color_by]] <- obj@meta.data[embeddings$Cell, color_by]
+  }
+  plot_data <- embeddings
 
   p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = Dim1, y = Dim2, text = Cell)) +
     ggplot2::theme_minimal() +
@@ -68,14 +79,19 @@ plot_reduction_interactive <- function(obj, reduction_name, color_by = "None",
 plot_reduction_static <- function(obj, reduction_name, color_by = "None",
                                   dims = c(1, 2), config) {
   embeddings <- extract_embeddings(obj, reduction_name, dims)
-  plot_data <- cbind(embeddings, obj@meta.data)
 
-  # Sample if too many cells for performance
-  if (nrow(plot_data) > config$max_cells_display) {
+  # Sample before joining to avoid copying all metadata for all cells
+  if (nrow(embeddings) > config$max_cells_display) {
     set.seed(42)
-    sample_idx <- sample(nrow(plot_data), config$max_cells_display)
-    plot_data <- plot_data[sample_idx, ]
+    sample_idx <- sample(nrow(embeddings), config$max_cells_display)
+    embeddings <- embeddings[sample_idx, , drop = FALSE]
   }
+
+  # Only join the single column needed for coloring
+  if (color_by != "None" && color_by %in% colnames(obj@meta.data)) {
+    embeddings[[color_by]] <- obj@meta.data[embeddings$Cell, color_by]
+  }
+  plot_data <- embeddings
 
   p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = Dim1, y = Dim2)) +
     ggplot2::theme_minimal() +

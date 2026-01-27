@@ -56,7 +56,7 @@ assay_panel_ui <- function(assay_name, obj) {
                 list(
                   shiny::h4("Counts Matrix"),
                   shiny::verbatimTextOutput(paste0(assay_name, "_counts_info")),
-                  DT::DTOutput(paste0(assay_name, "_counts_table"))
+                  shinycssloaders::withSpinner(DT::DTOutput(paste0(assay_name, "_counts_table")))
                 )
               } else {
                 shiny::p("No counts matrix available for this assay.")
@@ -71,7 +71,7 @@ assay_panel_ui <- function(assay_name, obj) {
                 list(
                   shiny::h4("Data (Normalized) Matrix"),
                   shiny::verbatimTextOutput(paste0(assay_name, "_data_info")),
-                  DT::DTOutput(paste0(assay_name, "_data_table"))
+                  shinycssloaders::withSpinner(DT::DTOutput(paste0(assay_name, "_data_table")))
                 )
               } else {
                 shiny::p("No data matrix available for this assay.")
@@ -86,7 +86,7 @@ assay_panel_ui <- function(assay_name, obj) {
                 list(
                   shiny::h4("Scale.Data Matrix"),
                   shiny::verbatimTextOutput(paste0(assay_name, "_scale_info")),
-                  DT::DTOutput(paste0(assay_name, "_scale_table"))
+                  shinycssloaders::withSpinner(DT::DTOutput(paste0(assay_name, "_scale_table")))
                 )
               } else {
                 shiny::p("No scale.data matrix available for this assay.")
@@ -137,22 +137,25 @@ assay_panel_server <- function(assay_name, obj, config, output) {
         cat("Matrix dimensions:", nrow(counts_matrix), "x", ncol(counts_matrix), "\n")
         cat("Sparsity:", sparsity$sparsity_percent, "%\n")
         cat("Memory:", round(sparsity$memory_mb, 2), "MB\n")
-        cat("Showing all", nrow(counts_matrix), "features and first",
-            min(ncol(counts_matrix), 20), "cells\n")
+        cat("Showing first", min(nrow(counts_matrix), config$default_matrix_rows),
+            "of", nrow(counts_matrix), "features and first",
+            min(ncol(counts_matrix), config$default_matrix_cols), "cells\n")
       }
     })
 
     output[[paste0(assay_name, "_counts_table")]] <- DT::renderDT({
       counts_matrix <- get_assay_data_safe(obj, assay_name, "counts")
       if (!is.null(counts_matrix)) {
-        # Extract all rows (genes) but limit columns (cells) to first 20
-        num_cols <- min(ncol(counts_matrix), 20)
+        # Limit rows to avoid expensive sparse-to-dense conversion of all genes
+        max_rows <- min(nrow(counts_matrix), config$default_matrix_rows)
+        num_cols <- min(ncol(counts_matrix), config$default_matrix_cols)
+        row_idx <- 1:max_rows
         col_idx <- 1:num_cols
 
         if (inherits(counts_matrix, "dgCMatrix") || inherits(counts_matrix, "sparseMatrix")) {
-          sample_matrix <- as.matrix(counts_matrix[, col_idx, drop = FALSE])
+          sample_matrix <- as.matrix(counts_matrix[row_idx, col_idx, drop = FALSE])
         } else {
-          sample_matrix <- counts_matrix[, col_idx, drop = FALSE]
+          sample_matrix <- counts_matrix[row_idx, col_idx, drop = FALSE]
         }
 
         DT::datatable(
@@ -165,7 +168,7 @@ assay_panel_server <- function(assay_name, obj, config, output) {
           )
         )
       }
-    })
+    }, server = TRUE)
   }
 
   if (assay_info$has_data) {
@@ -176,22 +179,25 @@ assay_panel_server <- function(assay_name, obj, config, output) {
         cat("Matrix dimensions:", nrow(data_matrix), "x", ncol(data_matrix), "\n")
         cat("Sparsity:", sparsity$sparsity_percent, "%\n")
         cat("Memory:", round(sparsity$memory_mb, 2), "MB\n")
-        cat("Showing all", nrow(data_matrix), "features and first",
-            min(ncol(data_matrix), 20), "cells\n")
+        cat("Showing first", min(nrow(data_matrix), config$default_matrix_rows),
+            "of", nrow(data_matrix), "features and first",
+            min(ncol(data_matrix), config$default_matrix_cols), "cells\n")
       }
     })
 
     output[[paste0(assay_name, "_data_table")]] <- DT::renderDT({
       data_matrix <- get_assay_data_safe(obj, assay_name, "data")
       if (!is.null(data_matrix)) {
-        # Extract all rows (genes) but limit columns (cells) to first 20
-        num_cols <- min(ncol(data_matrix), 20)
+        # Limit rows to avoid expensive sparse-to-dense conversion of all genes
+        max_rows <- min(nrow(data_matrix), config$default_matrix_rows)
+        num_cols <- min(ncol(data_matrix), config$default_matrix_cols)
+        row_idx <- 1:max_rows
         col_idx <- 1:num_cols
 
         if (inherits(data_matrix, "dgCMatrix") || inherits(data_matrix, "sparseMatrix")) {
-          sample_matrix <- as.matrix(data_matrix[, col_idx, drop = FALSE])
+          sample_matrix <- as.matrix(data_matrix[row_idx, col_idx, drop = FALSE])
         } else {
-          sample_matrix <- data_matrix[, col_idx, drop = FALSE]
+          sample_matrix <- data_matrix[row_idx, col_idx, drop = FALSE]
         }
 
         DT::datatable(
@@ -204,7 +210,7 @@ assay_panel_server <- function(assay_name, obj, config, output) {
           )
         )
       }
-    })
+    }, server = TRUE)
   }
 
   if (assay_info$has_scale_data) {
@@ -213,22 +219,25 @@ assay_panel_server <- function(assay_name, obj, config, output) {
       if (!is.null(scale_matrix)) {
         cat("Matrix dimensions:", nrow(scale_matrix), "x", ncol(scale_matrix), "\n")
         cat("Memory:", round(as.numeric(object.size(scale_matrix)) / 1024^2, 2), "MB\n")
-        cat("Showing all", nrow(scale_matrix), "features and first",
-            min(ncol(scale_matrix), 20), "cells\n")
+        cat("Showing first", min(nrow(scale_matrix), config$default_matrix_rows),
+            "of", nrow(scale_matrix), "features and first",
+            min(ncol(scale_matrix), config$default_matrix_cols), "cells\n")
       }
     })
 
     output[[paste0(assay_name, "_scale_table")]] <- DT::renderDT({
       scale_matrix <- get_assay_data_safe(obj, assay_name, "scale.data")
       if (!is.null(scale_matrix)) {
-        # Extract all rows (genes) but limit columns (cells) to first 20
-        num_cols <- min(ncol(scale_matrix), 20)
+        # Limit rows to avoid expensive sparse-to-dense conversion of all genes
+        max_rows <- min(nrow(scale_matrix), config$default_matrix_rows)
+        num_cols <- min(ncol(scale_matrix), config$default_matrix_cols)
+        row_idx <- 1:max_rows
         col_idx <- 1:num_cols
 
         if (inherits(scale_matrix, "dgCMatrix") || inherits(scale_matrix, "sparseMatrix")) {
-          sample_matrix <- as.matrix(scale_matrix[, col_idx, drop = FALSE])
+          sample_matrix <- as.matrix(scale_matrix[row_idx, col_idx, drop = FALSE])
         } else {
-          sample_matrix <- scale_matrix[, col_idx, drop = FALSE]
+          sample_matrix <- scale_matrix[row_idx, col_idx, drop = FALSE]
         }
 
         DT::datatable(
@@ -241,7 +250,7 @@ assay_panel_server <- function(assay_name, obj, config, output) {
           )
         )
       }
-    })
+    }, server = TRUE)
   }
 
   output[[paste0(assay_name, "_variable_features")]] <- DT::renderDT({

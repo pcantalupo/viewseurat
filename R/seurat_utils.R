@@ -18,7 +18,7 @@ load_config <- function() {
     point_alpha = 0.8,
     show_legend = TRUE,
     show_sparse_info = TRUE,
-    default_matrix_rows = 10,
+    default_matrix_rows = 500,
     default_matrix_cols = 20,
     enable_caching = TRUE,
     parallel_processing = FALSE,
@@ -121,16 +121,20 @@ get_matrix_sample <- function(matrix, max_rows = 10, max_cols = 20) {
 #' @export
 get_sparsity_info <- function(matrix) {
   if (inherits(matrix, "dgCMatrix") || inherits(matrix, "sparseMatrix")) {
-    total_elements <- length(matrix)
-    non_zero <- sum(matrix != 0)
+    total_elements <- as.numeric(nrow(matrix)) * as.numeric(ncol(matrix))
+    non_zero <- length(matrix@x)
     sparsity <- 1 - (non_zero / total_elements)
 
+    # Estimate memory from sparse slots directly to avoid expensive traversal
+    memory_bytes <- as.numeric(length(matrix@x) * 8 +  # numeric values
+                               length(matrix@i) * 4 +  # integer row indices
+                               length(matrix@p) * 4)   # integer column pointers
     info <- list(
       total_elements = total_elements,
       non_zero_elements = non_zero,
       zero_elements = total_elements - non_zero,
       sparsity_percent = round(sparsity * 100, 2),
-      memory_mb = as.numeric(object.size(matrix)) / 1024^2
+      memory_mb = round(memory_bytes / 1024^2, 2)
     )
   } else {
     total_elements <- length(matrix)
