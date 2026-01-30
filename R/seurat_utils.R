@@ -72,6 +72,9 @@ get_assay_info <- function(obj, assay_name) {
   # Use Layers() to check existence without loading data - much faster for large objects
   available_layers <- SeuratObject::Layers(assay)
 
+  n_variable_features <- length(VariableFeatures(assay))
+  n_feature_meta_cols <- ncol(assay@meta.data)
+
   info <- list(
     name = assay_name,
     features = nrow(assay),
@@ -79,7 +82,9 @@ get_assay_info <- function(obj, assay_name) {
     has_counts = "counts" %in% available_layers,
     has_data = "data" %in% available_layers,
     has_scale_data = "scale.data" %in% available_layers,
-    variable_features = length(VariableFeatures(assay))
+    variable_features = n_variable_features,
+    has_variable_features = n_variable_features > 0,
+    has_feature_metadata = n_feature_meta_cols > 0
   )
 
   return(info)

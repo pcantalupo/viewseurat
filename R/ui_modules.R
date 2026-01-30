@@ -86,19 +86,33 @@ assay_panel_ui <- function(assay_name, obj) {
             )
           )
         ),
-        shiny::tabPanel("Variable Features",
+        shiny::tabPanel(
+          if (assay_info$has_variable_features) "Variable Features \u2713" else "Variable Features",
           shiny::fluidRow(
             shiny::column(12,
-              shiny::h4("Variable Features"),
-              DT::DTOutput(paste0(assay_name, "_variable_features"))
+              if (assay_info$has_variable_features) {
+                list(
+                  shiny::h4("Variable Features"),
+                  DT::DTOutput(paste0(assay_name, "_variable_features"))
+                )
+              } else {
+                shiny::p("No variable features for this assay.")
+              }
             )
           )
         ),
-        shiny::tabPanel("Feature Metadata",
+        shiny::tabPanel(
+          if (assay_info$has_feature_metadata) "Feature Metadata \u2713" else "Feature Metadata",
           shiny::fluidRow(
             shiny::column(12,
-              shiny::h4("Feature-level Metadata"),
-              DT::DTOutput(paste0(assay_name, "_feature_meta"))
+              if (assay_info$has_feature_metadata) {
+                list(
+                  shiny::h4("Feature-level Metadata"),
+                  DT::DTOutput(paste0(assay_name, "_feature_meta"))
+                )
+              } else {
+                shiny::p("No feature metadata for this assay.")
+              }
             )
           )
         )
