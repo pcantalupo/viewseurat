@@ -298,8 +298,6 @@ viewseurat_server <- function(input, output, session) {
           status = "info",
           solidHeader = TRUE,
           width = 12,
-          collapsible = TRUE,
-          collapsed = TRUE,
           shiny::verbatimTextOutput("size_info_output")
         )
       )
@@ -384,14 +382,15 @@ viewseurat_server <- function(input, output, session) {
         title = "Assays"
       ),
       lapply(assay_names, function(assay_name) {
-        # Add "(default)" indicator to the default assay tab
+        # Add "(default)" indicator to the default assay tab (bolded)
         tab_label <- if (assay_name == default_assay) {
-          paste0(assay_name, " (default)")
+          shiny::tags$b(paste0(assay_name, " (default)"))
         } else {
           assay_name
         }
         shiny::tabPanel(
           tab_label,
+          value = assay_name,  # Use assay name as value for programmatic selection
           # Use uiOutput placeholder instead of calling assay_panel_ui() directly
           shinycssloaders::withSpinner(
             shiny::uiOutput(paste0("assay_content_", assay_name))
@@ -420,36 +419,22 @@ viewseurat_server <- function(input, output, session) {
   shiny::observeEvent(input$assay_tabs, {
     shiny::req(seurat_obj())
     obj <- seurat_obj()
-    assay_names <- names(obj@assays)
-    default_assay <- Seurat::DefaultAssay(obj)
-
-    # Map tab label back to assay name (tab labels may include " (default)")
-    selected_tab <- input$assay_tabs
-    selected_assay <- NULL
-    for (assay_name in assay_names) {
-      tab_label <- if (assay_name == default_assay) {
-        paste0(assay_name, " (default)")
-      } else {
-        assay_name
-      }
-      if (tab_label == selected_tab) {
-        selected_assay <- assay_name
-        break
-      }
-    }
-
-    if (!is.null(selected_assay)) {
+    # Tab value is now the assay name directly
+    selected_assay <- input$assay_tabs
+    if (!is.null(selected_assay) && selected_assay %in% names(obj@assays)) {
       initialize_assay(selected_assay, obj)
     }
   })
 
-  # Initialize the default assay when the Assays tab is first visited
+  # Initialize and select the default assay when the Assays tab is first visited
   shiny::observeEvent(input$sidebar, {
     if (input$sidebar == "assays") {
       shiny::req(seurat_obj())
       obj <- seurat_obj()
       default_assay <- Seurat::DefaultAssay(obj)
       initialize_assay(default_assay, obj)
+      # Auto-select the default assay tab
+      shiny::updateTabsetPanel(session, "assay_tabs", selected = default_assay)
     }
   }, ignoreInit = TRUE)
 

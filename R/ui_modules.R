@@ -283,7 +283,7 @@ assay_panel_server <- function(assay_name, obj, config, output) {
       }
     }, error = function(e) {
       DT::datatable(
-        data.frame(Message = "Unable to load feature metadata"),
+        data.frame(Message = "No feature metadata for this assay"),
         options = list(dom = 't')
       )
     })
