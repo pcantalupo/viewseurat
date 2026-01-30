@@ -32,24 +32,14 @@ assay_panel_ui <- function(assay_name, obj) {
             shiny::p(shiny::strong(format(assay_info$variable_features, big.mark = ",")))
           )
         ),
-        shiny::fluidRow(
-          shiny::column(4,
-            shiny::h5("Has Counts:", if(assay_info$has_counts) "\u2713" else "\u2717")
-          ),
-          shiny::column(4,
-            shiny::h5("Has Data:", if(assay_info$has_data) "\u2713" else "\u2717")
-          ),
-          shiny::column(4,
-            shiny::h5("Has Scale.Data:", if(assay_info$has_scale_data) "\u2713" else "\u2717")
-          )
-        )
       )
     ),
     shiny::column(12,
       shinydashboard::tabBox(
         id = paste0("assay_", assay_name, "_tabs"),
         width = 12,
-        shiny::tabPanel("Counts",
+        shiny::tabPanel(
+          if (assay_info$has_counts) "Counts \u2713" else "Counts",
           shiny::fluidRow(
             shiny::column(12,
               if (assay_info$has_counts) {
@@ -64,7 +54,8 @@ assay_panel_ui <- function(assay_name, obj) {
             )
           )
         ),
-        shiny::tabPanel("Data",
+        shiny::tabPanel(
+          if (assay_info$has_data) "Data \u2713" else "Data",
           shiny::fluidRow(
             shiny::column(12,
               if (assay_info$has_data) {
@@ -79,7 +70,8 @@ assay_panel_ui <- function(assay_name, obj) {
             )
           )
         ),
-        shiny::tabPanel("Scale.Data",
+        shiny::tabPanel(
+          if (assay_info$has_scale_data) "Scale.Data \u2713" else "Scale.Data",
           shiny::fluidRow(
             shiny::column(12,
               if (assay_info$has_scale_data) {
