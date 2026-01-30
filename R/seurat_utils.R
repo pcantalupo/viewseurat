@@ -73,9 +73,11 @@ get_assay_info <- function(obj, assay_name) {
   available_layers <- SeuratObject::Layers(assay)
 
   n_variable_features <- length(SeuratObject::VariableFeatures(assay))
-  # Safely check for feature metadata - meta.data may be NULL or empty
-  feature_meta <- assay@meta.data
-  n_feature_meta_cols <- if (!is.null(feature_meta)) ncol(feature_meta) else 0
+  # Safely check for feature metadata - slot may not exist for all assay types (e.g., SCTAssay)
+  n_feature_meta_cols <- tryCatch({
+    feature_meta <- assay@meta.data
+    if (!is.null(feature_meta)) ncol(feature_meta) else 0
+  }, error = function(e) 0)
 
   info <- list(
     name = assay_name,
