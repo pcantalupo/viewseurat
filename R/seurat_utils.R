@@ -64,17 +64,20 @@ load_config <- function() {
 #' @return A list with assay metadata including dimensions and available layers
 #' @keywords internal
 #' @export
-#' @importFrom Seurat GetAssayData VariableFeatures
+#' @importFrom Seurat GetAssayData VariableFeatures Layers
 get_assay_info <- function(obj, assay_name) {
   assay <- obj@assays[[assay_name]]
+
+  # Use Layers() to check existence without loading data - much faster for large objects
+  available_layers <- Layers(assay)
 
   info <- list(
     name = assay_name,
     features = nrow(assay),
     cells = ncol(assay),
-    has_counts = length(GetAssayData(assay, layer = "counts")) > 0,
-    has_data = length(GetAssayData(assay, layer = "data")) > 0,
-    has_scale_data = length(GetAssayData(assay, layer = "scale.data")) > 0,
+    has_counts = "counts" %in% available_layers,
+    has_data = "data" %in% available_layers,
+    has_scale_data = "scale.data" %in% available_layers,
     variable_features = length(VariableFeatures(assay))
   )
 

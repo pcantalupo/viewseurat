@@ -375,6 +375,8 @@ viewseurat_server <- function(input, output, session) {
     assay_names <- names(obj@assays)
     default_assay <- Seurat::DefaultAssay(obj)
 
+    # Create lightweight placeholder tabs - don't call assay_panel_ui() for all assays
+    # Content is rendered lazily via uiOutput when tab is selected
     do.call(shinydashboard::tabBox, c(
       list(
         id = "assay_tabs",
@@ -390,14 +392,30 @@ viewseurat_server <- function(input, output, session) {
         }
         shiny::tabPanel(
           tab_label,
-          assay_panel_ui(assay_name, obj)
+          # Use uiOutput placeholder instead of calling assay_panel_ui() directly
+          shinycssloaders::withSpinner(
+            shiny::uiOutput(paste0("assay_content_", assay_name))
+          )
         )
       })
     ))
   })
 
-  # Lazy initialization: only set up assay panel server when its tab is selected
+  # Lazy initialization: only render assay panel UI and server when its tab is selected
   initialized_assays <- shiny::reactiveVal(character(0))
+
+  # Helper function to initialize an assay (both UI and server)
+  initialize_assay <- function(assay_name, obj) {
+    if (!assay_name %in% initialized_assays()) {
+      # Render the UI content for this assay
+      output[[paste0("assay_content_", assay_name)]] <- shiny::renderUI({
+        assay_panel_ui(assay_name, obj)
+      })
+      # Set up the server logic
+      assay_panel_server(assay_name, obj, config, output)
+      initialized_assays(c(initialized_assays(), assay_name))
+    }
+  }
 
   shiny::observeEvent(input$assay_tabs, {
     shiny::req(seurat_obj())
@@ -420,9 +438,8 @@ viewseurat_server <- function(input, output, session) {
       }
     }
 
-    if (!is.null(selected_assay) && !selected_assay %in% initialized_assays()) {
-      assay_panel_server(selected_assay, obj, config, output)
-      initialized_assays(c(initialized_assays(), selected_assay))
+    if (!is.null(selected_assay)) {
+      initialize_assay(selected_assay, obj)
     }
   })
 
@@ -432,10 +449,7 @@ viewseurat_server <- function(input, output, session) {
       shiny::req(seurat_obj())
       obj <- seurat_obj()
       default_assay <- Seurat::DefaultAssay(obj)
-      if (!default_assay %in% initialized_assays()) {
-        assay_panel_server(default_assay, obj, config, output)
-        initialized_assays(c(initialized_assays(), default_assay))
-      }
+      initialize_assay(default_assay, obj)
     }
   }, ignoreInit = TRUE)
 
