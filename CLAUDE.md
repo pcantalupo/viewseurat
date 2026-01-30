@@ -119,6 +119,12 @@ For large datasets, sampling is applied automatically based on config limits.
 3. Create corresponding `output$[name]_ui <- renderUI({})` in the server function
 4. Implement UI generation logic that checks for data availability
 
+### Namespace Prefixes for External Packages
+
+Always use explicit namespace prefixes when calling functions from external packages (e.g., `Seurat::Layers()`, `shiny::renderUI()`, `DT::datatable()`). Do NOT rely on `@importFrom` roxygen directives alone, because:
+- The app can be run via `app.R` which sources files directly (bypasses NAMESPACE)
+- Explicit prefixes make dependencies clear and avoid "function not found" errors
+
 ### Handling Missing Data
 
 Always check for component existence before rendering:
