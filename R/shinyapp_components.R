@@ -276,7 +276,7 @@ viewseurat_server <- function(input, output, session) {
     shiny::fluidRow(
       shiny::column(12,
         shinydashboard::box(
-          title = "Seurat Summary",
+          title = "Standard Seurat summary",
           status = "info",
           solidHeader = TRUE,
           width = 12,
@@ -285,7 +285,7 @@ viewseurat_server <- function(input, output, session) {
       ),
       shiny::column(12,
         shinydashboard::box(
-          title = "SeuratInfo",
+          title = "View Seurat summary",
           status = "primary",
           solidHeader = TRUE,
           width = 12,
@@ -717,10 +717,8 @@ viewseurat_server <- function(input, output, session) {
 
     image_names <- names(obj@images)
 
-    # Get all available features (genes) and metadata columns for coloring
-    all_features <- rownames(obj)
+    # Only get metadata columns initially - genes loaded via server-side selectize
     metadata_cols <- colnames(obj@meta.data)
-    color_choices <- c("None", metadata_cols, all_features)
 
     shiny::fluidRow(
       shiny::column(12,
@@ -730,15 +728,30 @@ viewseurat_server <- function(input, output, session) {
           solidHeader = TRUE,
           width = 12,
           shiny::selectInput("selected_image", "Select Image:", choices = image_names),
-          shiny::selectInput("spatial_color_by", "Color by:",
-                      choices = color_choices,
-                      selected = "None"),
+          shiny::selectizeInput("spatial_color_by", "Color by:",
+                      choices = c("None", metadata_cols),
+                      selected = "None",
+                      options = list(
+                        placeholder = "Select or type gene name..."
+                      )),
           shiny::actionButton("plot_spatial", "Plot", class = "btn-primary"),
           shiny::hr(),
           shiny::plotOutput("spatial_plot", height = "600px")
         )
       )
     )
+  })
+
+  # Load gene choices in background via server-side selectize
+  shiny::observeEvent(seurat_obj(), {
+    obj <- seurat_obj()
+    if (length(obj@images) > 0) {
+      all_choices <- c("None", colnames(obj@meta.data), rownames(obj))
+      shiny::updateSelectizeInput(session, "spatial_color_by",
+        choices = all_choices,
+        selected = "None",
+        server = TRUE)
+    }
   })
 
   shiny::observeEvent(input$plot_spatial, {
