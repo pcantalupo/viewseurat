@@ -23,7 +23,7 @@ load_config <- function() {
     enable_caching = TRUE,
     parallel_processing = FALSE,
     max_upload_size_mb = 10240,
-    rows_per_page = 25
+    rows_per_page = 10
   )
 
   # Try to find config.yaml in various locations
