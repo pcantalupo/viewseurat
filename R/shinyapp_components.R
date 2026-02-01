@@ -758,14 +758,18 @@ viewseurat_server <- function(input, output, session) {
 
       if (is.null(input$spatial_color_by) || input$spatial_color_by == "None") {
         Seurat::SpatialPlot(obj, images = input$selected_image)
-      } else {
-        # Check if it's a metadata column or a feature
-        if (input$spatial_color_by %in% colnames(obj@meta.data)) {
-          Seurat::SpatialPlot(obj, images = input$selected_image, group.by = input$spatial_color_by)
-        } else {
-          # It's a feature/gene
+      } else if (input$spatial_color_by %in% colnames(obj@meta.data)) {
+        # Metadata column - check if numeric or categorical
+        if (is.numeric(obj@meta.data[[input$spatial_color_by]])) {
+          # Numeric metadata: use SpatialFeaturePlot for continuous color scale
           Seurat::SpatialFeaturePlot(obj, features = input$spatial_color_by, images = input$selected_image)
+        } else {
+          # Categorical metadata: use SpatialPlot with group.by
+          Seurat::SpatialPlot(obj, images = input$selected_image, group.by = input$spatial_color_by)
         }
+      } else {
+        # It's a feature/gene
+        Seurat::SpatialFeaturePlot(obj, features = input$spatial_color_by, images = input$selected_image)
       }
     })
   })
