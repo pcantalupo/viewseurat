@@ -4,14 +4,12 @@
 \alias{assay_panel_server}
 \title{Assay Panel Server}
 \usage{
-assay_panel_server(assay_name, obj, config, output)
+assay_panel_server(assay_name, obj, output)
 }
 \arguments{
 \item{assay_name}{Name of the assay}
 
 \item{obj}{A Seurat object}
-
-\item{config}{Configuration list}
 
 \item{output}{Shiny output object}
 }

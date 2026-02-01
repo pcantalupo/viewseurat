@@ -60,17 +60,6 @@ ViewSeurat(seurat_obj, title = "My Seurat Object")
 2. Upload your Seurat object (.rds or .qs2 file) via drag-and-drop or file browser
 3. Explore the various components using the sidebar navigation
 
-## Custom Configuration
-**Under Development**: Configuration options will be expanded in future releases.
-
-1. Copy `inst/extdata/config.yaml.example` to `config.yaml` in the app directory
-2. Edit `config.yaml` with your preferences:
-   - Display limits
-   - Color schemes
-   - Plot parameters
-   - Performance settings
-3. Restart the app
-
 # Project Structure
 ```
 viewseurat/
@@ -83,8 +72,7 @@ viewseurat/
 │   ├── plot_functions.R            # Plotting functions
 │   └── ui_modules.R                # Shiny UI modules
 └── inst/
-    └── extdata/
-        └── config.yaml.example     # Example configuration
+    └── extdata/                    # Package data files
 ```
 
 # Miscellaneous

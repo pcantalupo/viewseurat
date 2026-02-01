@@ -4,13 +4,7 @@
 \alias{plot_reduction_static}
 \title{Plot Reduction Static}
 \usage{
-plot_reduction_static(
-  obj,
-  reduction_name,
-  color_by = "None",
-  dims = c(1, 2),
-  config
-)
+plot_reduction_static(obj, reduction_name, color_by = "None", dims = c(1, 2))
 }
 \arguments{
 \item{obj}{A Seurat object}
@@ -20,8 +14,6 @@ plot_reduction_static(
 \item{color_by}{Metadata column to color by, or "None"}
 
 \item{dims}{Vector of two dimensions to plot}
-
-\item{config}{Configuration list with plot settings}
 }
 \value{
 A ggplot object

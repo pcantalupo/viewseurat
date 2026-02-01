@@ -6,19 +6,18 @@
 #' @param reduction_name Name of the reduction to plot
 #' @param color_by Metadata column to color by, or "None"
 #' @param dims Vector of two dimensions to plot
-#' @param config Configuration list with plot settings
 #' @return A plotly object
 #' @keywords internal
 #' @export
 #' @importFrom dplyr %>%
 plot_reduction_interactive <- function(obj, reduction_name, color_by = "None",
-                                       dims = c(1, 2), config) {
+                                       dims = c(1, 2)) {
   embeddings <- extract_embeddings(obj, reduction_name, dims)
 
   # Sample before joining to avoid copying all metadata for all cells
-  if (nrow(embeddings) > config$max_cells_display) {
+  if (nrow(embeddings) > 10000) {
     set.seed(42)
-    sample_idx <- sample(nrow(embeddings), config$max_cells_display)
+    sample_idx <- sample(nrow(embeddings), 10000)
     embeddings <- embeddings[sample_idx, , drop = FALSE]
   }
 
@@ -40,21 +39,21 @@ plot_reduction_interactive <- function(obj, reduction_name, color_by = "None",
     if (is.numeric(obj@meta.data[[color_by]])) {
       p <- p + ggplot2::geom_point(
         ggplot2::aes_string(color = color_by),
-        size = config$point_size,
-        alpha = config$point_alpha
+        size = 1.0,
+        alpha = 0.8
       ) +
-        ggplot2::scale_color_viridis_c(option = config$color_palette)
+        ggplot2::scale_color_viridis_c(option = "viridis")
     } else {
       p <- p + ggplot2::geom_point(
         ggplot2::aes_string(color = color_by),
-        size = config$point_size,
-        alpha = config$point_alpha
+        size = 1.0,
+        alpha = 0.8
       )
     }
   } else {
     p <- p + ggplot2::geom_point(
-      size = config$point_size,
-      alpha = config$point_alpha,
+      size = 1.0,
+      alpha = 0.8,
       color = "steelblue"
     )
   }
@@ -72,18 +71,17 @@ plot_reduction_interactive <- function(obj, reduction_name, color_by = "None",
 #' @param reduction_name Name of the reduction to plot
 #' @param color_by Metadata column to color by, or "None"
 #' @param dims Vector of two dimensions to plot
-#' @param config Configuration list with plot settings
 #' @return A ggplot object
 #' @keywords internal
 #' @export
 plot_reduction_static <- function(obj, reduction_name, color_by = "None",
-                                  dims = c(1, 2), config) {
+                                  dims = c(1, 2)) {
   embeddings <- extract_embeddings(obj, reduction_name, dims)
 
   # Sample before joining to avoid copying all metadata for all cells
-  if (nrow(embeddings) > config$max_cells_display) {
+  if (nrow(embeddings) > 10000) {
     set.seed(42)
-    sample_idx <- sample(nrow(embeddings), config$max_cells_display)
+    sample_idx <- sample(nrow(embeddings), 10000)
     embeddings <- embeddings[sample_idx, , drop = FALSE]
   }
 
@@ -105,21 +103,21 @@ plot_reduction_static <- function(obj, reduction_name, color_by = "None",
     if (is.numeric(obj@meta.data[[color_by]])) {
       p <- p + ggplot2::geom_point(
         ggplot2::aes_string(color = color_by),
-        size = config$point_size,
-        alpha = config$point_alpha
+        size = 1.0,
+        alpha = 0.8
       ) +
-        ggplot2::scale_color_viridis_c(option = config$color_palette)
+        ggplot2::scale_color_viridis_c(option = "viridis")
     } else {
       p <- p + ggplot2::geom_point(
         ggplot2::aes_string(color = color_by),
-        size = config$point_size,
-        alpha = config$point_alpha
+        size = 1.0,
+        alpha = 0.8
       )
     }
   } else {
     p <- p + ggplot2::geom_point(
-      size = config$point_size,
-      alpha = config$point_alpha,
+      size = 1.0,
+      alpha = 0.8,
       color = "steelblue"
     )
   }
@@ -135,11 +133,10 @@ plot_reduction_static <- function(obj, reduction_name, color_by = "None",
 #' @param reduction_name Name of the reduction to plot
 #' @param feature Gene/feature name to plot
 #' @param dims Vector of two dimensions to plot
-#' @param config Configuration list with plot settings
 #' @return A ggplot object
 #' @keywords internal
 #' @export
-plot_feature_expression <- function(obj, reduction_name, feature, dims = c(1, 2), config) {
+plot_feature_expression <- function(obj, reduction_name, feature, dims = c(1, 2)) {
   embeddings <- extract_embeddings(obj, reduction_name, dims)
 
   if (!feature %in% rownames(obj)) {
@@ -150,8 +147,8 @@ plot_feature_expression <- function(obj, reduction_name, feature, dims = c(1, 2)
   plot_data <- cbind(embeddings, Expression = expression)
 
   p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = Dim1, y = Dim2, color = Expression)) +
-    ggplot2::geom_point(size = config$point_size, alpha = config$point_alpha) +
-    ggplot2::scale_color_viridis_c(option = config$color_palette) +
+    ggplot2::geom_point(size = 1.0, alpha = 0.8) +
+    ggplot2::scale_color_viridis_c(option = "viridis") +
     ggplot2::theme_minimal() +
     ggplot2::labs(
       x = paste0(reduction_name, "_", dims[1]),
@@ -168,11 +165,10 @@ plot_feature_expression <- function(obj, reduction_name, feature, dims = c(1, 2)
 #'
 #' @param obj A Seurat object
 #' @param column Metadata column name
-#' @param config Configuration list with plot settings
 #' @return A ggplot object
 #' @keywords internal
 #' @export
-plot_metadata_distribution <- function(obj, column, config) {
+plot_metadata_distribution <- function(obj, column) {
   data <- obj@meta.data[[column]]
 
   if (is.numeric(data)) {
@@ -218,11 +214,10 @@ plot_metadata_distribution <- function(obj, column, config) {
 #' Create histograms of common QC metrics.
 #'
 #' @param obj A Seurat object
-#' @param config Configuration list with plot settings
 #' @return A list of ggplot objects or NULL
 #' @keywords internal
 #' @export
-plot_qc_metrics <- function(obj, config) {
+plot_qc_metrics <- function(obj) {
   qc_cols <- c("nCount_RNA", "nFeature_RNA", "percent.mt")
   available_cols <- intersect(qc_cols, colnames(obj@meta.data))
 

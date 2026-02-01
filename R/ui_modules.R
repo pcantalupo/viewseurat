@@ -127,12 +127,11 @@ assay_panel_ui <- function(assay_name, obj) {
 #'
 #' @param assay_name Name of the assay
 #' @param obj A Seurat object
-#' @param config Configuration list
 #' @param output Shiny output object
 #' @return NULL (called for side effects)
 #' @keywords internal
 #' @export
-assay_panel_server <- function(assay_name, obj, config, output) {
+assay_panel_server <- function(assay_name, obj, output) {
   assay_info <- get_assay_info(obj, assay_name)
 
   if (assay_info$has_counts) {
@@ -143,9 +142,9 @@ assay_panel_server <- function(assay_name, obj, config, output) {
         cat("Matrix dimensions:", nrow(counts_matrix), "x", ncol(counts_matrix), "\n")
         cat("Sparsity:", sparsity$sparsity_percent, "%\n")
         cat("Memory:", round(sparsity$memory_mb, 2), "MB\n")
-        cat("Showing first", min(nrow(counts_matrix), config$default_matrix_rows),
+        cat("Showing first", min(nrow(counts_matrix), 50),
             "of", nrow(counts_matrix), "features and first",
-            min(ncol(counts_matrix), config$default_matrix_cols), "cells\n")
+            min(ncol(counts_matrix), 20), "cells\n")
       }
     })
 
@@ -153,8 +152,8 @@ assay_panel_server <- function(assay_name, obj, config, output) {
       counts_matrix <- get_assay_data_safe(obj, assay_name, "counts")
       if (!is.null(counts_matrix)) {
         # Limit rows to avoid expensive sparse-to-dense conversion of all genes
-        max_rows <- min(nrow(counts_matrix), config$default_matrix_rows)
-        num_cols <- min(ncol(counts_matrix), config$default_matrix_cols)
+        max_rows <- min(nrow(counts_matrix), 50)
+        num_cols <- min(ncol(counts_matrix), 20)
         row_idx <- 1:max_rows
         col_idx <- 1:num_cols
 
@@ -185,9 +184,9 @@ assay_panel_server <- function(assay_name, obj, config, output) {
         cat("Matrix dimensions:", nrow(data_matrix), "x", ncol(data_matrix), "\n")
         cat("Sparsity:", sparsity$sparsity_percent, "%\n")
         cat("Memory:", round(sparsity$memory_mb, 2), "MB\n")
-        cat("Showing first", min(nrow(data_matrix), config$default_matrix_rows),
+        cat("Showing first", min(nrow(data_matrix), 50),
             "of", nrow(data_matrix), "features and first",
-            min(ncol(data_matrix), config$default_matrix_cols), "cells\n")
+            min(ncol(data_matrix), 20), "cells\n")
       }
     })
 
@@ -195,8 +194,8 @@ assay_panel_server <- function(assay_name, obj, config, output) {
       data_matrix <- get_assay_data_safe(obj, assay_name, "data")
       if (!is.null(data_matrix)) {
         # Limit rows to avoid expensive sparse-to-dense conversion of all genes
-        max_rows <- min(nrow(data_matrix), config$default_matrix_rows)
-        num_cols <- min(ncol(data_matrix), config$default_matrix_cols)
+        max_rows <- min(nrow(data_matrix), 50)
+        num_cols <- min(ncol(data_matrix), 20)
         row_idx <- 1:max_rows
         col_idx <- 1:num_cols
 
@@ -225,9 +224,9 @@ assay_panel_server <- function(assay_name, obj, config, output) {
       if (!is.null(scale_matrix)) {
         cat("Matrix dimensions:", nrow(scale_matrix), "x", ncol(scale_matrix), "\n")
         cat("Memory:", round(as.numeric(object.size(scale_matrix)) / 1024^2, 2), "MB\n")
-        cat("Showing first", min(nrow(scale_matrix), config$default_matrix_rows),
+        cat("Showing first", min(nrow(scale_matrix), 50),
             "of", nrow(scale_matrix), "features and first",
-            min(ncol(scale_matrix), config$default_matrix_cols), "cells\n")
+            min(ncol(scale_matrix), 20), "cells\n")
       }
     })
 
@@ -235,8 +234,8 @@ assay_panel_server <- function(assay_name, obj, config, output) {
       scale_matrix <- get_assay_data_safe(obj, assay_name, "scale.data")
       if (!is.null(scale_matrix)) {
         # Limit rows to avoid expensive sparse-to-dense conversion of all genes
-        max_rows <- min(nrow(scale_matrix), config$default_matrix_rows)
-        num_cols <- min(ncol(scale_matrix), config$default_matrix_cols)
+        max_rows <- min(nrow(scale_matrix), 50)
+        num_cols <- min(ncol(scale_matrix), 20)
         row_idx <- 1:max_rows
         col_idx <- 1:num_cols
 
@@ -260,7 +259,7 @@ assay_panel_server <- function(assay_name, obj, config, output) {
   }
 
   output[[paste0(assay_name, "_variable_features")]] <- DT::renderDT({
-    var_features <- get_top_variable_features(obj, assay_name, n = config$max_features_display)
+    var_features <- get_top_variable_features(obj, assay_name, n = 100)
     if (!is.null(var_features) && length(var_features) > 0) {
       var_features_sorted <- sort(var_features)
       DT::datatable(
@@ -277,7 +276,7 @@ assay_panel_server <- function(assay_name, obj, config, output) {
         DT::datatable(
           assay@meta.data,
           options = list(
-            pageLength = config$rows_per_page,
+            pageLength = 10,
             scrollX = TRUE
           )
         )

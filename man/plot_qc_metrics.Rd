@@ -4,12 +4,10 @@
 \alias{plot_qc_metrics}
 \title{Plot QC Metrics}
 \usage{
-plot_qc_metrics(obj, config)
+plot_qc_metrics(obj)
 }
 \arguments{
 \item{obj}{A Seurat object}
-
-\item{config}{Configuration list with plot settings}
 }
 \value{
 A list of ggplot objects or NULL

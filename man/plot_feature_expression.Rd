@@ -4,7 +4,7 @@
 \alias{plot_feature_expression}
 \title{Plot Feature Expression}
 \usage{
-plot_feature_expression(obj, reduction_name, feature, dims = c(1, 2), config)
+plot_feature_expression(obj, reduction_name, feature, dims = c(1, 2))
 }
 \arguments{
 \item{obj}{A Seurat object}
@@ -14,8 +14,6 @@ plot_feature_expression(obj, reduction_name, feature, dims = c(1, 2), config)
 \item{feature}{Gene/feature name to plot}
 
 \item{dims}{Vector of two dimensions to plot}
-
-\item{config}{Configuration list with plot settings}
 }
 \value{
 A ggplot object

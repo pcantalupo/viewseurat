@@ -9,8 +9,7 @@ ViewSeurat(
   title = NULL,
   launch.browser = TRUE,
   port = NULL,
-  host = "127.0.0.1",
-  config = NULL
+  host = "127.0.0.1"
 )
 }
 \arguments{
@@ -29,9 +28,6 @@ a browser window. Default is TRUE.}
 
 \item{host}{The IPv4 address that the application should listen on.
 Default is "127.0.0.1" (localhost only).}
-
-\item{config}{A list of configuration options to override defaults.
-See \code{config.yaml.example} for available options.}
 }
 \value{
 This function does not return a value. It launches a Shiny

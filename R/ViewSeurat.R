@@ -16,8 +16,6 @@
 #'   (the default), a random port will be chosen.
 #' @param host The IPv4 address that the application should listen on.
 #'   Default is "127.0.0.1" (localhost only).
-#' @param config A list of configuration options to override defaults.
-#'   See \code{config.yaml.example} for available options.
 #'
 #' @return This function does not return a value. It launches a Shiny
 #'   application in the viewer or browser.
@@ -42,8 +40,7 @@ ViewSeurat <- function(obj = NULL,
                        title = NULL,
                        launch.browser = TRUE,
                        port = NULL,
-                       host = "127.0.0.1",
-                       config = NULL) {
+                       host = "127.0.0.1") {
 
   # Validate Seurat object if provided
   if (!is.null(obj)) {
@@ -57,7 +54,6 @@ ViewSeurat <- function(obj = NULL,
   shiny::shinyOptions(viewseurat.obj = obj)
   shiny::shinyOptions(viewseurat.preloaded = !is.null(obj))
   shiny::shinyOptions(viewseurat.title = title)
-  shiny::shinyOptions(viewseurat.config = config)
 
   # Create the app object
   app <- viewseurat_app()

@@ -188,8 +188,6 @@ viewseurat_ui <- function() {
 #' @keywords internal
 viewseurat_server <- function(input, output, session) {
 
-  config <- load_config()
-
   seurat_obj <- shiny::reactiveVal(NULL)
   file_size_bytes <- shiny::reactiveVal(NULL)
   uploaded_filename <- shiny::reactiveVal("")
@@ -411,7 +409,7 @@ viewseurat_server <- function(input, output, session) {
         assay_panel_ui(assay_name, obj)
       })
       # Set up the server logic
-      assay_panel_server(assay_name, obj, config, output)
+      assay_panel_server(assay_name, obj, output)
       initialized_assays(c(initialized_assays(), assay_name))
     }
   }
@@ -471,8 +469,7 @@ viewseurat_server <- function(input, output, session) {
           width = 12,
           shiny::selectInput("selected_reduction", "Select Reduction:",
                       choices = reduction_choices,
-                      selected = if(config$default_reduction %in% reduction_names)
-                        config$default_reduction else reduction_names[1]),
+                      selected = if("umap" %in% reduction_names) "umap" else reduction_names[1]),
           shiny::selectInput("color_by", "Color by:",
                       choices = c("None", colnames(obj@meta.data))),
           shiny::selectInput("dim1", "Dimension 1:", choices = 1, selected = 1),
@@ -523,8 +520,7 @@ viewseurat_server <- function(input, output, session) {
         seurat_obj(),
         input$selected_reduction,
         input$color_by,
-        c(as.integer(input$dim1), as.integer(input$dim2)),
-        config
+        c(as.integer(input$dim1), as.integer(input$dim2))
       )
     })
 
@@ -534,7 +530,7 @@ viewseurat_server <- function(input, output, session) {
       DT::datatable(
         as.data.frame(embeddings),
         options = list(
-          pageLength = config$rows_per_page,
+          pageLength = 10,
           scrollX = TRUE
         )
       )
@@ -610,7 +606,7 @@ viewseurat_server <- function(input, output, session) {
     DT::datatable(
       obj@meta.data,
       options = list(
-        pageLength = config$rows_per_page,
+        pageLength = 10,
         scrollX = TRUE,
         scrollCollapse = TRUE,
         autoWidth = TRUE,
@@ -628,7 +624,7 @@ viewseurat_server <- function(input, output, session) {
 
   output$metadata_plot <- shiny::renderPlot({
     shiny::req(seurat_obj(), input$metadata_column)
-    plot_metadata_distribution(seurat_obj(), input$metadata_column, config)
+    plot_metadata_distribution(seurat_obj(), input$metadata_column)
   })
 
   shiny::observeEvent(input$scroll_to_table, {
@@ -783,8 +779,8 @@ viewseurat_server <- function(input, output, session) {
 #' @return A Shiny app object
 #' @keywords internal
 viewseurat_app <- function() {
-  config <- load_config()
-  options(shiny.maxRequestSize = config$max_upload_size_mb * 1024^2)
+  # Set max upload size (10 GB)
+  options(shiny.maxRequestSize = 10240 * 1024^2)
 
   shiny::shinyApp(ui = viewseurat_ui(), server = viewseurat_server)
 }

@@ -29,9 +29,8 @@ source("R/plot_functions.R")
 source("R/ui_modules.R")
 source("R/shinyapp_components.R")
 
-# Load config and set max upload size
-config <- load_config()
-options(shiny.maxRequestSize = config$max_upload_size_mb * 1024^2)
+# Set max upload size (10 GB)
+options(shiny.maxRequestSize = 10240 * 1024^2)
 
 # Create and return the app (explicit shinyApp call for RStudio detection)
 shinyApp(ui = viewseurat_ui(), server = viewseurat_server)

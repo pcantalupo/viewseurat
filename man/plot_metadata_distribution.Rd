@@ -4,14 +4,12 @@
 \alias{plot_metadata_distribution}
 \title{Plot Metadata Distribution}
 \usage{
-plot_metadata_distribution(obj, column, config)
+plot_metadata_distribution(obj, column)
 }
 \arguments{
 \item{obj}{A Seurat object}
 
 \item{column}{Metadata column name}
-
-\item{config}{Configuration list with plot settings}
 }
 \value{
 A ggplot object

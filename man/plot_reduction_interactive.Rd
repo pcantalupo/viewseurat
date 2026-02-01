@@ -8,8 +8,7 @@ plot_reduction_interactive(
   obj,
   reduction_name,
   color_by = "None",
-  dims = c(1, 2),
-  config
+  dims = c(1, 2)
 )
 }
 \arguments{
@@ -20,8 +19,6 @@ plot_reduction_interactive(
 \item{color_by}{Metadata column to color by, or "None"}
 
 \item{dims}{Vector of two dimensions to plot}
-
-\item{config}{Configuration list with plot settings}
 }
 \value{
 A plotly object
