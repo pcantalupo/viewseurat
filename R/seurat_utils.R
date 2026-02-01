@@ -7,7 +7,7 @@
 #' @return A list with assay metadata including dimensions and available layers
 #' @keywords internal
 #' @export
-#' @importFrom Seurat GetAssayData VariableFeatures
+#' @importFrom Seurat VariableFeatures
 #' @importFrom SeuratObject Layers
 get_assay_info <- function(obj, assay_name) {
   assay <- obj@assays[[assay_name]]
