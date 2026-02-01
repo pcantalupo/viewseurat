@@ -45,6 +45,9 @@ viewseurat_ui <- function() {
           .small-box h3 { font-size: 42px; }
           .small-box p { font-size: 16px; }
           .small-box .icon { font-size: 70px; }
+          .shiny-file-input-progress {
+            display: none;
+          }
           #drop_zone {
             border: 3px dashed #3c8dbc;
             border-radius: 10px;
@@ -132,7 +135,7 @@ viewseurat_ui <- function() {
                   fileInput.dispatchEvent(event);
 
                   // Update drop zone text
-                  dropZone.innerHTML = '<h3><i class=\"fa fa-check-circle\"></i> File Ready</h3><p>' + file.name + '</p>';
+                  dropZone.innerHTML = '<h3><i class=\"fa fa-check-circle\"></i> File selected</h3><p>' + file.name + '</p>';
                 } else {
                   alert('Please upload an .rds or .qs2 file');
                 }
@@ -232,18 +235,14 @@ viewseurat_server <- function(input, output, session) {
   upload_waiter <- waiter::Waiter$new(
     html = shiny::tagList(
       waiter::spin_fading_circles(),
-      shiny::h4("Preparing upload...")
+      shiny::h4("Loading Seurat object..."),
+      shiny::p("This may take several minutes for large files.")
     ),
     color = "rgba(0, 0, 0, 0.7)"
   )
 
   # Show waiter immediately when file selection detected
   shiny::observeEvent(input$file_upload_started, {
-    upload_waiter$update(html = shiny::tagList(
-      waiter::spin_fading_circles(),
-      shiny::h4("Uploading file to server..."),
-      shiny::p(input$file_upload_started$filename)
-    ))
     upload_waiter$show()
   })
 
@@ -252,13 +251,6 @@ viewseurat_server <- function(input, output, session) {
     shiny::req(input$seurat_file)
 
     tryCatch({
-      # Update waiter - processing stage
-      upload_waiter$update(html = shiny::tagList(
-        waiter::spin_fading_circles(),
-        shiny::h4("Reading Seurat object from disk..."),
-        shiny::p(input$seurat_file$name)
-      ))
-
       # Detect file type and load accordingly
       file_ext <- tolower(tools::file_ext(input$seurat_file$name))
 
@@ -269,12 +261,6 @@ viewseurat_server <- function(input, output, session) {
       } else {
         stop("Unsupported file format. Please use .rds or .qs2 files.")
       }
-
-      # Update waiter - validation stage
-      upload_waiter$update(html = shiny::tagList(
-        waiter::spin_fading_circles(),
-        shiny::h4("Validating Seurat object...")
-      ))
 
       if (!inherits(obj, "Seurat")) {
         stop("File does not contain a valid Seurat object")
