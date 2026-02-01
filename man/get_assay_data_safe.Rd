@@ -2,9 +2,15 @@
 % Please edit documentation in R/seurat_utils.R
 \name{get_assay_data_safe}
 \alias{get_assay_data_safe}
-\title{Get Assay Data Safely}
+\title{Get Assay Data Safely with Subsetting}
 \usage{
-get_assay_data_safe(obj, assay_name, layer)
+get_assay_data_safe(
+  obj,
+  assay_name,
+  layer,
+  max_features = NULL,
+  max_cells = NULL
+)
 }
 \arguments{
 \item{obj}{A Seurat object}
@@ -12,11 +18,17 @@ get_assay_data_safe(obj, assay_name, layer)
 \item{assay_name}{Name of the assay}
 
 \item{layer}{Name of the layer (counts, data, scale.data)}
+
+\item{max_features}{Maximum features to retrieve (NULL for all)}
+
+\item{max_cells}{Maximum cells to retrieve (NULL for all)}
 }
 \value{
 Matrix data or NULL if not available
 }
 \description{
-Wrapper around GetAssayData with error handling.
+Wrapper around LayerData with error handling and optional subsetting.
+Subsetting at retrieval time is much faster for large/on-disk matrices
+because LayerData() with features/cells params avoids loading the full matrix.
 }
 \keyword{internal}

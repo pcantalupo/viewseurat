@@ -125,40 +125,6 @@ plot_reduction_static <- function(obj, reduction_name, color_by = "None",
   return(p)
 }
 
-#' Plot Feature Expression
-#'
-#' Create a scatter plot showing expression of a single feature.
-#'
-#' @param obj A Seurat object
-#' @param reduction_name Name of the reduction to plot
-#' @param feature Gene/feature name to plot
-#' @param dims Vector of two dimensions to plot
-#' @return A ggplot object
-#' @keywords internal
-#' @export
-plot_feature_expression <- function(obj, reduction_name, feature, dims = c(1, 2)) {
-  embeddings <- extract_embeddings(obj, reduction_name, dims)
-
-  if (!feature %in% rownames(obj)) {
-    stop("Feature not found in object")
-  }
-
-  expression <- GetAssayData(obj, layer = "data")[feature, ]
-  plot_data <- cbind(embeddings, Expression = expression)
-
-  p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = Dim1, y = Dim2, color = Expression)) +
-    ggplot2::geom_point(size = 1.0, alpha = 0.8) +
-    ggplot2::scale_color_viridis_c(option = "viridis") +
-    ggplot2::theme_minimal() +
-    ggplot2::labs(
-      x = paste0(reduction_name, "_", dims[1]),
-      y = paste0(reduction_name, "_", dims[2]),
-      title = paste("Expression of", feature)
-    )
-
-  return(p)
-}
-
 #' Plot Metadata Distribution
 #'
 #' Create a histogram or bar plot showing distribution of a metadata column.
