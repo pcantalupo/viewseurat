@@ -8,6 +8,7 @@
 #' @keywords internal
 #' @export
 assay_panel_ui <- function(assay_name, obj) {
+
   assay_info <- get_assay_info(obj, assay_name)
 
   shiny::fluidRow(
@@ -134,43 +135,77 @@ assay_panel_ui <- function(assay_name, obj) {
 assay_panel_server <- function(assay_name, obj, output) {
   assay_info <- get_assay_info(obj, assay_name)
 
+
+  # Constants for preview limits
+
+max_preview_features <- 50
+  max_preview_cells <- 20
+
+  # Cache layer data with reactive() - fetch once with subsetting, reuse for info + table
+  # LayerData() with features/cells params subsets at retrieval time,
+ # which is much faster than loading the full matrix then subsetting
+  counts_data <- shiny::reactive({
+    if (assay_info$has_counts) {
+      get_assay_data_safe(obj, assay_name, "counts",
+                          max_features = max_preview_features,
+                          max_cells = max_preview_cells)
+    }
+  })
+
+  data_data <- shiny::reactive({
+    if (assay_info$has_data) {
+      get_assay_data_safe(obj, assay_name, "data",
+                          max_features = max_preview_features,
+                          max_cells = max_preview_cells)
+    }
+  })
+
+  scale_data <- shiny::reactive({
+    if (assay_info$has_scale_data) {
+      get_assay_data_safe(obj, assay_name, "scale.data",
+                          max_features = max_preview_features,
+                          max_cells = max_preview_cells)
+    }
+  })
+
+  # Helper to convert sparse matrix to dense for display
+  to_dense <- function(mat) {
+    if (inherits(mat, "dgCMatrix") || inherits(mat, "sparseMatrix")) {
+      as.matrix(mat)
+    } else {
+      mat
+    }
+  }
+
+  # Helper to create standard DataTable options
+  dt_options <- function() {
+    list(
+      pageLength = 10,
+      lengthMenu = list(c(10, 25, 50, -1), c('10', '25', '50', 'All')),
+      scrollX = TRUE,
+      scrollY = "400px"
+    )
+  }
+
   if (assay_info$has_counts) {
     output[[paste0(assay_name, "_counts_info")]] <- shiny::renderPrint({
-      counts_matrix <- get_assay_data_safe(obj, assay_name, "counts")
-      if (!is.null(counts_matrix)) {
-        sparsity <- get_sparsity_info(counts_matrix)
-        cat("Matrix dimensions:", nrow(counts_matrix), "x", ncol(counts_matrix), "\n")
-        cat("Sparsity:", sparsity$sparsity_percent, "%\n")
-        cat("Memory:", round(sparsity$memory_mb, 2), "MB\n")
-        cat("Showing first", min(nrow(counts_matrix), 50),
-            "of", nrow(counts_matrix), "features and first",
-            min(ncol(counts_matrix), 20), "cells\n")
-      }
+      # Get dimensions from assay metadata (cheap) instead of loading full matrix
+      assay <- obj@assays[[assay_name]]
+      full_rows <- nrow(assay)
+      full_cols <- ncol(assay)
+
+      cat("Matrix dimensions:", full_rows, "x", full_cols, "\n")
+      cat("Showing first", min(full_rows, max_preview_features),
+          "of", full_rows, "features and first",
+          min(full_cols, max_preview_cells), "cells\n")
     })
 
     output[[paste0(assay_name, "_counts_table")]] <- DT::renderDT({
-      counts_matrix <- get_assay_data_safe(obj, assay_name, "counts")
-      if (!is.null(counts_matrix)) {
-        # Limit rows to avoid expensive sparse-to-dense conversion of all genes
-        max_rows <- min(nrow(counts_matrix), 50)
-        num_cols <- min(ncol(counts_matrix), 20)
-        row_idx <- 1:max_rows
-        col_idx <- 1:num_cols
-
-        if (inherits(counts_matrix, "dgCMatrix") || inherits(counts_matrix, "sparseMatrix")) {
-          sample_matrix <- as.matrix(counts_matrix[row_idx, col_idx, drop = FALSE])
-        } else {
-          sample_matrix <- counts_matrix[row_idx, col_idx, drop = FALSE]
-        }
-
+      mat <- counts_data()
+      if (!is.null(mat)) {
         DT::datatable(
-          as.data.frame(sample_matrix),
-          options = list(
-            pageLength = 10,
-            lengthMenu = list(c(10, 25, 50, 100, -1), c('10', '25', '50', '100', 'All')),
-            scrollX = TRUE,
-            scrollY = "400px"
-          )
+          as.data.frame(to_dense(mat)),
+          options = dt_options()
         )
       }
     }, server = TRUE)
@@ -178,41 +213,22 @@ assay_panel_server <- function(assay_name, obj, output) {
 
   if (assay_info$has_data) {
     output[[paste0(assay_name, "_data_info")]] <- shiny::renderPrint({
-      data_matrix <- get_assay_data_safe(obj, assay_name, "data")
-      if (!is.null(data_matrix)) {
-        sparsity <- get_sparsity_info(data_matrix)
-        cat("Matrix dimensions:", nrow(data_matrix), "x", ncol(data_matrix), "\n")
-        cat("Sparsity:", sparsity$sparsity_percent, "%\n")
-        cat("Memory:", round(sparsity$memory_mb, 2), "MB\n")
-        cat("Showing first", min(nrow(data_matrix), 50),
-            "of", nrow(data_matrix), "features and first",
-            min(ncol(data_matrix), 20), "cells\n")
-      }
+      assay <- obj@assays[[assay_name]]
+      full_rows <- nrow(assay)
+      full_cols <- ncol(assay)
+
+      cat("Matrix dimensions:", full_rows, "x", full_cols, "\n")
+      cat("Showing first", min(full_rows, max_preview_features),
+          "of", full_rows, "features and first",
+          min(full_cols, max_preview_cells), "cells\n")
     })
 
     output[[paste0(assay_name, "_data_table")]] <- DT::renderDT({
-      data_matrix <- get_assay_data_safe(obj, assay_name, "data")
-      if (!is.null(data_matrix)) {
-        # Limit rows to avoid expensive sparse-to-dense conversion of all genes
-        max_rows <- min(nrow(data_matrix), 50)
-        num_cols <- min(ncol(data_matrix), 20)
-        row_idx <- 1:max_rows
-        col_idx <- 1:num_cols
-
-        if (inherits(data_matrix, "dgCMatrix") || inherits(data_matrix, "sparseMatrix")) {
-          sample_matrix <- as.matrix(data_matrix[row_idx, col_idx, drop = FALSE])
-        } else {
-          sample_matrix <- data_matrix[row_idx, col_idx, drop = FALSE]
-        }
-
+      mat <- data_data()
+      if (!is.null(mat)) {
         DT::datatable(
-          as.data.frame(sample_matrix),
-          options = list(
-            pageLength = 10,
-            lengthMenu = list(c(10, 25, 50, 100, -1), c('10', '25', '50', '100', 'All')),
-            scrollX = TRUE,
-            scrollY = "400px"
-          )
+          as.data.frame(to_dense(mat)),
+          options = dt_options()
         )
       }
     }, server = TRUE)
@@ -220,39 +236,22 @@ assay_panel_server <- function(assay_name, obj, output) {
 
   if (assay_info$has_scale_data) {
     output[[paste0(assay_name, "_scale_info")]] <- shiny::renderPrint({
-      scale_matrix <- get_assay_data_safe(obj, assay_name, "scale.data")
-      if (!is.null(scale_matrix)) {
-        cat("Matrix dimensions:", nrow(scale_matrix), "x", ncol(scale_matrix), "\n")
-        cat("Memory:", round(as.numeric(object.size(scale_matrix)) / 1024^2, 2), "MB\n")
-        cat("Showing first", min(nrow(scale_matrix), 50),
-            "of", nrow(scale_matrix), "features and first",
-            min(ncol(scale_matrix), 20), "cells\n")
-      }
+      assay <- obj@assays[[assay_name]]
+      full_rows <- nrow(assay)
+      full_cols <- ncol(assay)
+
+      cat("Matrix dimensions:", full_rows, "x", full_cols, "\n")
+      cat("Showing first", min(full_rows, max_preview_features),
+          "of", full_rows, "features and first",
+          min(full_cols, max_preview_cells), "cells\n")
     })
 
     output[[paste0(assay_name, "_scale_table")]] <- DT::renderDT({
-      scale_matrix <- get_assay_data_safe(obj, assay_name, "scale.data")
-      if (!is.null(scale_matrix)) {
-        # Limit rows to avoid expensive sparse-to-dense conversion of all genes
-        max_rows <- min(nrow(scale_matrix), 50)
-        num_cols <- min(ncol(scale_matrix), 20)
-        row_idx <- 1:max_rows
-        col_idx <- 1:num_cols
-
-        if (inherits(scale_matrix, "dgCMatrix") || inherits(scale_matrix, "sparseMatrix")) {
-          sample_matrix <- as.matrix(scale_matrix[row_idx, col_idx, drop = FALSE])
-        } else {
-          sample_matrix <- scale_matrix[row_idx, col_idx, drop = FALSE]
-        }
-
+      mat <- scale_data()
+      if (!is.null(mat)) {
         DT::datatable(
-          as.data.frame(sample_matrix),
-          options = list(
-            pageLength = 10,
-            lengthMenu = list(c(10, 25, 50, 100, -1), c('10', '25', '50', '100', 'All')),
-            scrollX = TRUE,
-            scrollY = "400px"
-          )
+          as.data.frame(to_dense(mat)),
+          options = dt_options()
         )
       }
     }, server = TRUE)
