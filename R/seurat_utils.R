@@ -206,21 +206,47 @@ validate_seurat_object <- function(obj) {
   return(TRUE)
 }
 
-#' Get Assay Data Safely
+#' Get Assay Data Safely with Subsetting
 #'
-#' Wrapper around GetAssayData with error handling.
+#' Wrapper around LayerData with error handling and optional subsetting.
+#' Subsetting at retrieval time is much faster for large/on-disk matrices
+#' because LayerData() with features/cells params avoids loading the full matrix.
 #'
 #' @param obj A Seurat object
 #' @param assay_name Name of the assay
 #' @param layer Name of the layer (counts, data, scale.data)
+#' @param max_features Maximum features to retrieve (NULL for all)
+#' @param max_cells Maximum cells to retrieve (NULL for all)
 #' @return Matrix data or NULL if not available
 #' @keywords internal
 #' @export
-#' @importFrom Seurat GetAssayData DefaultAssay
-get_assay_data_safe <- function(obj, assay_name, layer) {
+#' @importFrom SeuratObject LayerData
+get_assay_data_safe <- function(obj, assay_name, layer,
+                                max_features = NULL, max_cells = NULL) {
   tryCatch({
-    DefaultAssay(obj) <- assay_name
-    GetAssayData(obj, layer = layer)
+    assay <- obj@assays[[assay_name]]
+
+    # Determine subsetting indices
+    features <- NULL
+    cells <- NULL
+
+    if (!is.null(max_features)) {
+      n_features <- nrow(assay)
+      if (max_features < n_features) {
+        features <- 1:max_features
+      }
+    }
+
+    if (!is.null(max_cells)) {
+      n_cells <- ncol(assay)
+      if (max_cells < n_cells) {
+        cells <- 1:max_cells
+      }
+    }
+
+    # LayerData subsets at retrieval - much faster for large/on-disk data
+    SeuratObject::LayerData(assay, layer = layer,
+                            features = features, cells = cells)
   }, error = function(e) {
     NULL
   })
