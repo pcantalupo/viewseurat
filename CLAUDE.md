@@ -9,3 +9,6 @@ Read-only Shiny app viewer for Seurat v5 objects.
 ## Critical: Namespace Prefixes
 ALWAYS use explicit namespace prefixes (`SeuratObject::Layers()`, `shiny::renderUI()`, `DT::datatable()`). The `app.R` launcher sources R/ files directly, bypassing NAMESPACE - code must work in that context.
 
+## Settings
+Keep `settings.local.json` in `.claude/` directory (not project root).
+

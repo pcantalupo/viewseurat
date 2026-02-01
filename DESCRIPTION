@@ -26,6 +26,7 @@ Imports:
     qs2,
     shinycssloaders,
     shinyjs,
+    waiter,
     yaml,
     methods,
     stats,

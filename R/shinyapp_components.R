@@ -35,6 +35,7 @@ viewseurat_ui <- function() {
     ),
 
     shinydashboard::dashboardBody(
+      waiter::useWaiter(),
       shinyjs::useShinyjs(),
       shiny::tags$head(
         shiny::tags$style(shiny::HTML("
@@ -67,6 +68,17 @@ viewseurat_ui <- function() {
         ")),
         shiny::tags$script(shiny::HTML("
           $(document).on('shiny:connected', function() {
+            // Listen for file input change (both browse and drag-drop)
+            $('#seurat_file').on('change', function(e) {
+              if (this.files && this.files.length > 0) {
+                // Immediately notify R to show waiter
+                Shiny.setInputValue('file_upload_started', {
+                  filename: this.files[0].name,
+                  timestamp: Date.now()
+                });
+              }
+            });
+
             var dropZone = document.getElementById('drop_zone');
 
             // Prevent default drag behaviors
@@ -216,50 +228,80 @@ viewseurat_server <- function(input, output, session) {
     }
   })
 
+  # Create waiter for upload progress
+  upload_waiter <- waiter::Waiter$new(
+    html = shiny::tagList(
+      waiter::spin_fading_circles(),
+      shiny::h4("Preparing upload...")
+    ),
+    color = "rgba(0, 0, 0, 0.7)"
+  )
+
+  # Show waiter immediately when file selection detected
+  shiny::observeEvent(input$file_upload_started, {
+    upload_waiter$update(html = shiny::tagList(
+      waiter::spin_fading_circles(),
+      shiny::h4("Uploading file to server..."),
+      shiny::p(input$file_upload_started$filename)
+    ))
+    upload_waiter$show()
+  })
+
+  # Process file when upload completes
   shiny::observeEvent(input$seurat_file, {
     shiny::req(input$seurat_file)
 
     tryCatch({
-      shiny::withProgress(message = "Loading Seurat object...", value = 0, {
-        # Detect file type and load accordingly
-        file_ext <- tolower(tools::file_ext(input$seurat_file$name))
+      # Update waiter - processing stage
+      upload_waiter$update(html = shiny::tagList(
+        waiter::spin_fading_circles(),
+        shiny::h4("Reading Seurat object from disk..."),
+        shiny::p(input$seurat_file$name)
+      ))
 
-        shiny::incProgress(0.1, detail = "Reading file from disk...")
-        if (file_ext == "rds") {
-          obj <- readRDS(input$seurat_file$datapath)
-        } else if (file_ext == "qs2") {
-          obj <- qs2::qs_read(input$seurat_file$datapath)
-        } else {
-          stop("Unsupported file format. Please use .rds or .qs2 files.")
-        }
+      # Detect file type and load accordingly
+      file_ext <- tolower(tools::file_ext(input$seurat_file$name))
 
-        shiny::incProgress(0.6, detail = "Validating Seurat object...")
-        if (!inherits(obj, "Seurat")) {
-          stop("File does not contain a valid Seurat object")
-        }
+      if (file_ext == "rds") {
+        obj <- readRDS(input$seurat_file$datapath)
+      } else if (file_ext == "qs2") {
+        obj <- qs2::qs_read(input$seurat_file$datapath)
+      } else {
+        stop("Unsupported file format. Please use .rds or .qs2 files.")
+      }
 
-        shiny::incProgress(0.2, detail = "Preparing viewer...")
-        seurat_obj(obj)
-        file_size_bytes(input$seurat_file$size)
-        uploaded_filename(input$seurat_file$name)
+      # Update waiter - validation stage
+      upload_waiter$update(html = shiny::tagList(
+        waiter::spin_fading_circles(),
+        shiny::h4("Validating Seurat object...")
+      ))
 
-        output$upload_status <- shiny::renderText({
-          paste0(
-            "Successfully loaded Seurat object\n",
-            "File type: ", toupper(file_ext), "\n",
-            "Cells: ", ncol(obj), "\n",
-            "Assays: ", paste(names(obj@assays), collapse = ", "), "\n",
-            "Reductions: ", paste(names(obj@reductions), collapse = ", ")
-          )
-        })
+      if (!inherits(obj, "Seurat")) {
+        stop("File does not contain a valid Seurat object")
+      }
 
-        shiny::incProgress(0.1, detail = "Done!")
+      # Store object
+      seurat_obj(obj)
+      file_size_bytes(input$seurat_file$size)
+      uploaded_filename(input$seurat_file$name)
+
+      output$upload_status <- shiny::renderText({
+        paste0(
+          "Successfully loaded Seurat object\n",
+          "File type: ", toupper(file_ext), "\n",
+          "Cells: ", ncol(obj), "\n",
+          "Assays: ", paste(names(obj@assays), collapse = ", "), "\n",
+          "Reductions: ", paste(names(obj@reductions), collapse = ", ")
+        )
       })
 
+      # Hide waiter and navigate
+      upload_waiter$hide()
       shiny::showNotification("Seurat object loaded successfully!", type = "message")
       shinydashboard::updateTabItems(session, "sidebar", "overview")
 
     }, error = function(e) {
+      upload_waiter$hide()
       output$upload_status <- shiny::renderText({
         paste("Error loading file:", e$message)
       })
