@@ -26,12 +26,12 @@ viewseurat_ui <- function() {
       shinydashboard::sidebarMenu(id = "sidebar",
         shinydashboard::menuItem("Upload", tabName = "upload", icon = shiny::icon("upload")),
         shinydashboard::menuItem("Overview", tabName = "overview", icon = shiny::icon("info-circle")),
+        shinydashboard::menuItem("The Guts", tabName = "guts", icon = shiny::icon("cogs")),
         shinydashboard::menuItem("Assays", tabName = "assays", icon = shiny::icon("table")),
-        shinydashboard::menuItem("Reductions", tabName = "reductions", icon = shiny::icon("project-diagram")),
         shinydashboard::menuItem("Metadata", tabName = "metadata", icon = shiny::icon("list")),
-        shinydashboard::menuItem("Graphs", tabName = "graphs", icon = shiny::icon("share-alt")),
+        shinydashboard::menuItem("Reductions", tabName = "reductions", icon = shiny::icon("project-diagram")),
         shinydashboard::menuItem("Images", tabName = "images", icon = shiny::icon("image")),
-        shinydashboard::menuItem("The Guts", tabName = "guts", icon = shiny::icon("cogs"))
+        shinydashboard::menuItem("Graphs", tabName = "graphs", icon = shiny::icon("share-alt"))
       )
     ),
 
@@ -809,24 +809,96 @@ viewseurat_server <- function(input, output, session) {
 
   output$guts_ui <- shiny::renderUI({
     shiny::req(seurat_obj())
+    obj <- seurat_obj()
+    slot_names <- sort(methods::slotNames(obj))
 
     shiny::fluidRow(
       shiny::column(12,
         shinydashboard::box(
-          title = "Object Structure",
+          title = "Object Slots",
           status = "primary",
           solidHeader = TRUE,
           width = 12,
-          shiny::p("Internal structure of the Seurat object using str():"),
+          shiny::p("Click a slot to view its internal structure:"),
+          shiny::div(
+            style = "display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px;",
+            lapply(slot_names, function(slot_name) {
+              slot_obj <- methods::slot(obj, slot_name)
+              slot_class <- class(slot_obj)[1]
+              slot_size <- object.size(slot_obj)
+
+              # Format size nicely
+              if (slot_size >= 1024^3) {
+                size_str <- paste0(round(slot_size / 1024^3, 2), " GB")
+              } else if (slot_size >= 1024^2) {
+                size_str <- paste0(round(slot_size / 1024^2, 2), " MB")
+              } else if (slot_size >= 1024) {
+                size_str <- paste0(round(slot_size / 1024, 2), " KB")
+              } else {
+                size_str <- paste0(slot_size, " bytes")
+              }
+
+              shiny::div(
+                style = "text-align: center;",
+                shiny::actionButton(
+                  inputId = paste0("slot_", slot_name),
+                  label = paste0("@", slot_name),
+                  class = "btn-info",
+                  style = "min-width: 120px; display: block; margin-bottom: 5px;"
+                ),
+                shiny::tags$small(
+                  style = "color: #666; display: block;",
+                  paste0(slot_class, " (", size_str, ")")
+                )
+              )
+            })
+          )
+        )
+      ),
+      shiny::column(12,
+        shinydashboard::box(
+          title = shiny::textOutput("guts_title", inline = TRUE),
+          status = "info",
+          solidHeader = TRUE,
+          width = 12,
+          collapsible = TRUE,
           shiny::verbatimTextOutput("guts_output")
         )
       )
     )
   })
 
-  output$guts_output <- shiny::renderPrint({
+  # Track selected slot
+  selected_slot <- shiny::reactiveVal(NULL)
+
+  # Dynamically observe all slot buttons
+  shiny::observe({
     shiny::req(seurat_obj())
-    str(seurat_obj())
+    obj <- seurat_obj()
+    slot_names <- methods::slotNames(obj)
+
+    lapply(slot_names, function(slot_name) {
+      shiny::observeEvent(input[[paste0("slot_", slot_name)]], {
+        selected_slot(slot_name)
+      })
+    })
+  })
+
+  output$guts_title <- shiny::renderText({
+    if (is.null(selected_slot())) {
+      "Select a slot above"
+    } else {
+      paste0("Structure of @", selected_slot())
+    }
+  })
+
+  output$guts_output <- shiny::renderPrint({
+    shiny::req(seurat_obj(), selected_slot())
+    obj <- seurat_obj()
+    slot_name <- selected_slot()
+
+    cat(paste0("str(seurat@", slot_name, "):\n\n"))
+    str(methods::slot(obj, slot_name))
   })
 }
 
