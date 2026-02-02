@@ -30,7 +30,8 @@ viewseurat_ui <- function() {
         shinydashboard::menuItem("Reductions", tabName = "reductions", icon = shiny::icon("project-diagram")),
         shinydashboard::menuItem("Metadata", tabName = "metadata", icon = shiny::icon("list")),
         shinydashboard::menuItem("Graphs", tabName = "graphs", icon = shiny::icon("share-alt")),
-        shinydashboard::menuItem("Images", tabName = "images", icon = shiny::icon("image"))
+        shinydashboard::menuItem("Images", tabName = "images", icon = shiny::icon("image")),
+        shinydashboard::menuItem("The Guts", tabName = "guts", icon = shiny::icon("cogs"))
       )
     ),
 
@@ -189,6 +190,10 @@ viewseurat_ui <- function() {
 
         shinydashboard::tabItem(tabName = "images",
           shiny::uiOutput("images_ui")
+        ),
+
+        shinydashboard::tabItem(tabName = "guts",
+          shiny::uiOutput("guts_ui")
         )
       )
     )
@@ -800,6 +805,28 @@ viewseurat_server <- function(input, output, session) {
         Seurat::SpatialFeaturePlot(obj, features = input$spatial_color_by, images = input$selected_image)
       }
     })
+  })
+
+  output$guts_ui <- shiny::renderUI({
+    shiny::req(seurat_obj())
+
+    shiny::fluidRow(
+      shiny::column(12,
+        shinydashboard::box(
+          title = "Object Structure",
+          status = "primary",
+          solidHeader = TRUE,
+          width = 12,
+          shiny::p("Internal structure of the Seurat object using str():"),
+          shiny::verbatimTextOutput("guts_output")
+        )
+      )
+    )
+  })
+
+  output$guts_output <- shiny::renderPrint({
+    shiny::req(seurat_obj())
+    str(seurat_obj())
   })
 }
 
