@@ -210,10 +210,6 @@ FindIdentLabel <- function(seurat) {
   return("Unknown")
 }
 
-#' Get Seurat Object Information
-#'
-#' Generate a comprehensive summary of a Seurat object.
-#'
 #' Get Layer Dimensions
 #'
 #' Returns the dimensions of a specific layer within an assay, handling both
@@ -238,6 +234,10 @@ get_layer_dim <- function(assay_obj, layer) {
   dim(mat)
 }
 
+#' Get Seurat Object Information
+#'
+#' Generate a comprehensive summary of a Seurat object.
+#'
 #' @param seurat A Seurat object
 #' @return A list with formatted information about the object
 #' @export
