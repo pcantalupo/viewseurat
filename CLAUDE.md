@@ -18,3 +18,5 @@ ALWAYS use explicit namespace prefixes (`SeuratObject::Layers()`, `shiny::render
 ## Settings
 Keep `settings.local.json` in `.claude/` directory (not project root).
 
+## Miscellaneous
+Don't commit changes automatically. Wait for explicit /ship or commit request.
