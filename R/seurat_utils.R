@@ -278,6 +278,30 @@ FindIdentLabel <- function(seurat) {
 #'
 #' Generate a comprehensive summary of a Seurat object.
 #'
+#' Get Layer Dimensions
+#'
+#' Returns the dimensions of a specific layer within an assay, handling both
+#' v5 Assay objects (layers slot) and v4-style direct slots. Works on SCTAssay
+#' and other assay subclasses that may lack a layers slot.
+#'
+#' @param assay_obj A Seurat Assay object
+#' @param layer Name of the layer (e.g. "counts", "data", "scale.data")
+#' @return Integer vector c(nrow, ncol), or c(0L, 0L) if layer is absent
+#' @keywords internal
+#' @export
+get_layer_dim <- function(assay_obj, layer) {
+  slotnames <- slotNames(assay_obj)
+  mat <- NULL
+  if ("layers" %in% slotnames) {
+    mat <- assay_obj@layers[[layer]]
+  } else if (layer %in% slotnames) {
+    mat <- slot(assay_obj, layer)
+  }
+
+  if (is.null(mat)) return(c(0L, 0L))
+  dim(mat)
+}
+
 #' @param seurat A Seurat object
 #' @return A list with formatted information about the object
 #' @export
@@ -325,27 +349,6 @@ SeuratInfo <- function(seurat) {
   assays <- names(seurat@assays)
   default_assay <- DefaultAssay(seurat)
 
-  # get the dimension string for a slot in an assay object
-  get_layer_dim <- function(assay_obj, slot) {
-    slotnames <- slotNames(assay_obj)
-    layer <- NULL
-    if ("layers" %in% slotnames) {   # v5 layers slot
-      layer <- assay_obj@layers[[slot]]
-    }
-    else if (slot %in% slotnames) {  # v4 direct slot
-      layer <- slot(assay_obj, slot)
-    }
-
-    if (is.null(layer)) {
-      dim_string <- "0x0"
-    } else {
-      dims <- dim(layer)
-      dim_string <- paste0(dims[1], "x", dims[2])
-    }
-
-    return(dim_string)
-  }
-
   slotinfo <- list()
   slots <- c("counts", "data", "scale.data")
 
@@ -354,7 +357,10 @@ SeuratInfo <- function(seurat) {
 
     defaultassay <- ifelse(default_assay == assay, "YES", "")
 
-    dims <- sapply(slots, function(slot) get_layer_dim(assay_obj, slot))
+    dims <- sapply(slots, function(slot) {
+      d <- get_layer_dim(assay_obj, slot)
+      paste0(d[1], "x", d[2])
+    })
 
     hvgs <- length(VariableFeatures(seurat, assay = assay))
 

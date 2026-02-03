@@ -189,15 +189,11 @@ max_preview_features <- 50
 
   if (assay_info$has_counts) {
     output[[paste0(assay_name, "_counts_info")]] <- shiny::renderPrint({
-      # Get dimensions from assay metadata (cheap) instead of loading full matrix
-      assay <- obj@assays[[assay_name]]
-      full_rows <- nrow(assay)
-      full_cols <- ncol(assay)
+      d <- get_layer_dim(obj@assays[[assay_name]], "counts")
+      full_rows <- d[1]
+      full_cols <- d[2]
 
       cat("Matrix dimensions:", full_rows, "x", full_cols, "\n")
-      cat("Showing first", min(full_rows, max_preview_features),
-          "of", full_rows, "features and first",
-          min(full_cols, max_preview_cells), "cells\n")
     })
 
     output[[paste0(assay_name, "_counts_table")]] <- DT::renderDT({
@@ -213,14 +209,11 @@ max_preview_features <- 50
 
   if (assay_info$has_data) {
     output[[paste0(assay_name, "_data_info")]] <- shiny::renderPrint({
-      assay <- obj@assays[[assay_name]]
-      full_rows <- nrow(assay)
-      full_cols <- ncol(assay)
+      d <- get_layer_dim(obj@assays[[assay_name]], "data")
+      full_rows <- d[1]
+      full_cols <- d[2]
 
       cat("Matrix dimensions:", full_rows, "x", full_cols, "\n")
-      cat("Showing first", min(full_rows, max_preview_features),
-          "of", full_rows, "features and first",
-          min(full_cols, max_preview_cells), "cells\n")
     })
 
     output[[paste0(assay_name, "_data_table")]] <- DT::renderDT({
@@ -236,14 +229,11 @@ max_preview_features <- 50
 
   if (assay_info$has_scale_data) {
     output[[paste0(assay_name, "_scale_info")]] <- shiny::renderPrint({
-      assay <- obj@assays[[assay_name]]
-      full_rows <- nrow(assay)
-      full_cols <- ncol(assay)
+      d <- get_layer_dim(obj@assays[[assay_name]], "scale.data")
+      full_rows <- d[1]
+      full_cols <- d[2]
 
       cat("Matrix dimensions:", full_rows, "x", full_cols, "\n")
-      cat("Showing first", min(full_rows, max_preview_features),
-          "of", full_rows, "features and first",
-          min(full_cols, max_preview_cells), "cells\n")
     })
 
     output[[paste0(assay_name, "_scale_table")]] <- DT::renderDT({
