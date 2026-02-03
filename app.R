@@ -26,7 +26,7 @@ library(shinyjs)
 # Source all package R files
 source("R/seurat_utils.R")
 source("R/plot_functions.R")
-source("R/ui_modules.R")
+source("R/assay_panel.R")
 source("R/shinyapp_components.R")
 
 # Set max upload size (10 GB)

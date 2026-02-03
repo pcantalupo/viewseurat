@@ -1,42 +1,3 @@
-#' Get Assay Information
-#'
-#' Extract information about a specific assay from a Seurat object.
-#'
-#' @param obj A Seurat object
-#' @param assay_name Name of the assay to get information for
-#' @return A list with assay metadata including dimensions and available layers
-#' @keywords internal
-#' @export
-#' @importFrom Seurat VariableFeatures
-#' @importFrom SeuratObject Layers
-get_assay_info <- function(obj, assay_name) {
-  assay <- obj@assays[[assay_name]]
-
-  # Use Layers() to check existence without loading data - much faster for large objects
-  available_layers <- SeuratObject::Layers(assay)
-
-  n_variable_features <- length(SeuratObject::VariableFeatures(assay))
-  # Safely check for feature metadata - slot may not exist for all assay types (e.g., SCTAssay)
-  n_feature_meta_cols <- tryCatch({
-    feature_meta <- assay@meta.data
-    if (!is.null(feature_meta)) ncol(feature_meta) else 0
-  }, error = function(e) 0)
-
-  info <- list(
-    name = assay_name,
-    features = nrow(assay),
-    cells = ncol(assay),
-    has_counts = "counts" %in% available_layers,
-    has_data = "data" %in% available_layers,
-    has_scale_data = "scale.data" %in% available_layers,
-    variable_features = n_variable_features,
-    has_variable_features = n_variable_features > 0,
-    has_feature_metadata = n_feature_meta_cols > 0
-  )
-
-  return(info)
-}
-
 #' Get Matrix Sample
 #'
 #' Extract a sample of rows and columns from a matrix for display.
@@ -107,31 +68,6 @@ get_sparsity_info <- function(matrix) {
   }
 
   return(info)
-}
-
-#' Extract Embeddings
-#'
-#' Extract dimensional reduction embeddings from a Seurat object.
-#'
-#' @param obj A Seurat object
-#' @param reduction_name Name of the reduction
-#' @param dims Vector of two dimensions to extract
-#' @return A data frame with cell names and embedding coordinates
-#' @keywords internal
-#' @export
-#' @importFrom SeuratObject Embeddings
-extract_embeddings <- function(obj, reduction_name, dims = c(1, 2)) {
-  embeddings <- Embeddings(obj, reduction = reduction_name)
-
-  if (max(dims) > ncol(embeddings)) {
-    stop("Requested dimensions exceed available dimensions in reduction")
-  }
-
-  data.frame(
-    Cell = rownames(embeddings),
-    Dim1 = embeddings[, dims[1]],
-    Dim2 = embeddings[, dims[2]]
-  )
 }
 
 #' Get Top Variable Features

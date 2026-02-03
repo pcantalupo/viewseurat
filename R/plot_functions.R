@@ -1,3 +1,28 @@
+#' Extract Embeddings
+#'
+#' Extract dimensional reduction embeddings from a Seurat object.
+#'
+#' @param obj A Seurat object
+#' @param reduction_name Name of the reduction
+#' @param dims Vector of two dimensions to extract
+#' @return A data frame with cell names and embedding coordinates
+#' @keywords internal
+#' @export
+#' @importFrom SeuratObject Embeddings
+extract_embeddings <- function(obj, reduction_name, dims = c(1, 2)) {
+  embeddings <- Embeddings(obj, reduction = reduction_name)
+
+  if (max(dims) > ncol(embeddings)) {
+    stop("Requested dimensions exceed available dimensions in reduction")
+  }
+
+  data.frame(
+    Cell = rownames(embeddings),
+    Dim1 = embeddings[, dims[1]],
+    Dim2 = embeddings[, dims[2]]
+  )
+}
+
 #' Plot Reduction Interactive
 #'
 #' Create an interactive plotly scatter plot for dimensional reduction.
