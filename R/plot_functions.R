@@ -63,14 +63,14 @@ plot_reduction_interactive <- function(obj, reduction_name, color_by = "None",
   if (color_by != "None" && color_by %in% colnames(obj@meta.data)) {
     if (is.numeric(obj@meta.data[[color_by]])) {
       p <- p + ggplot2::geom_point(
-        ggplot2::aes_string(color = color_by),
+        ggplot2::aes(color = .data[[color_by]]),
         size = 1.0,
         alpha = 0.8
       ) +
         ggplot2::scale_color_viridis_c(option = "viridis")
     } else {
       p <- p + ggplot2::geom_point(
-        ggplot2::aes_string(color = color_by),
+        ggplot2::aes(color = .data[[color_by]]),
         size = 1.0,
         alpha = 0.8
       )
@@ -127,14 +127,14 @@ plot_reduction_static <- function(obj, reduction_name, color_by = "None",
   if (color_by != "None" && color_by %in% colnames(obj@meta.data)) {
     if (is.numeric(obj@meta.data[[color_by]])) {
       p <- p + ggplot2::geom_point(
-        ggplot2::aes_string(color = color_by),
+        ggplot2::aes(color = .data[[color_by]]),
         size = 1.0,
         alpha = 0.8
       ) +
         ggplot2::scale_color_viridis_c(option = "viridis")
     } else {
       p <- p + ggplot2::geom_point(
-        ggplot2::aes_string(color = color_by),
+        ggplot2::aes(color = .data[[color_by]]),
         size = 1.0,
         alpha = 0.8
       )
@@ -163,7 +163,7 @@ plot_metadata_distribution <- function(obj, column) {
   data <- obj@meta.data[[column]]
 
   if (is.numeric(data)) {
-    p <- ggplot2::ggplot(obj@meta.data, ggplot2::aes_string(x = column)) +
+    p <- ggplot2::ggplot(obj@meta.data, ggplot2::aes(x = .data[[column]])) +
       ggplot2::geom_histogram(bins = 30, fill = "steelblue", alpha = 0.7) +
       ggplot2::theme_minimal() +
       ggplot2::labs(
@@ -219,10 +219,10 @@ plot_qc_metrics <- function(obj) {
   plots <- list()
 
   for (col in available_cols) {
-    p <- ggplot2::ggplot(obj@meta.data, ggplot2::aes_string(x = col)) +
+    median_val <- median(obj@meta.data[[col]], na.rm = TRUE)
+    p <- ggplot2::ggplot(obj@meta.data, ggplot2::aes(x = .data[[col]])) +
       ggplot2::geom_histogram(bins = 50, fill = "steelblue", alpha = 0.7) +
-      ggplot2::geom_vline(ggplot2::aes(xintercept = median(obj@meta.data[[col]])),
-                 color = "red", linetype = "dashed") +
+      ggplot2::geom_vline(xintercept = median_val, color = "red", linetype = "dashed") +
       ggplot2::theme_minimal() +
       ggplot2::labs(title = col, x = col, y = "Count")
 

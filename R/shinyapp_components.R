@@ -870,18 +870,26 @@ viewseurat_server <- function(input, output, session) {
 
   # Track selected slot
   selected_slot <- shiny::reactiveVal(NULL)
+  # Track which slot observers have been created to avoid duplicates
+  slot_observers_created <- shiny::reactiveVal(FALSE)
 
-  # Dynamically observe all slot buttons
+  # Create slot button observers only once when object first loads
   shiny::observe({
     shiny::req(seurat_obj())
+    # Only create observers once per session
+
+    if (slot_observers_created()) return()
+
     obj <- seurat_obj()
     slot_names <- methods::slotNames(obj)
 
     lapply(slot_names, function(slot_name) {
       shiny::observeEvent(input[[paste0("slot_", slot_name)]], {
         selected_slot(slot_name)
-      })
+      }, ignoreInit = TRUE)
     })
+
+    slot_observers_created(TRUE)
   })
 
   output$guts_title <- shiny::renderText({

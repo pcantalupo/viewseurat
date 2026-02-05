@@ -9,17 +9,20 @@
 #' @keywords internal
 #' @export
 get_matrix_sample <- function(matrix, max_rows = 10, max_cols = 20) {
-  if (nrow(matrix) > max_rows) {
-    row_idx <- 1:max_rows
-  } else {
-    row_idx <- 1:nrow(matrix)
+  # Handle empty matrices - 1:0 in R returns c(1, 0), not empty vector
+ nr <- nrow(matrix)
+  nc <- ncol(matrix)
+
+  if (nr == 0 || nc == 0) {
+    if (inherits(matrix, "dgCMatrix") || inherits(matrix, "sparseMatrix")) {
+      return(as.matrix(matrix))
+    } else {
+      return(matrix)
+    }
   }
 
-  if (ncol(matrix) > max_cols) {
-    col_idx <- 1:max_cols
-  } else {
-    col_idx <- 1:ncol(matrix)
-  }
+  row_idx <- seq_len(min(nr, max_rows))
+  col_idx <- seq_len(min(nc, max_cols))
 
   if (inherits(matrix, "dgCMatrix") || inherits(matrix, "sparseMatrix")) {
     return(as.matrix(matrix[row_idx, col_idx, drop = FALSE]))
@@ -37,8 +40,21 @@ get_matrix_sample <- function(matrix, max_rows = 10, max_cols = 20) {
 #' @keywords internal
 #' @export
 get_sparsity_info <- function(matrix) {
-  if (inherits(matrix, "dgCMatrix") || inherits(matrix, "sparseMatrix")) {
-    total_elements <- as.numeric(nrow(matrix)) * as.numeric(ncol(matrix))
+  total_elements <- as.numeric(nrow(matrix)) * as.numeric(ncol(matrix))
+
+  # Handle empty matrices to avoid division by zero
+ if (total_elements == 0) {
+    return(list(
+      total_elements = 0,
+      non_zero_elements = 0,
+      zero_elements = 0,
+      sparsity_percent = 100,
+      memory_mb = 0
+    ))
+  }
+
+  # Only use slot access for dgCMatrix specifically (not all sparseMatrix subclasses)
+ if (inherits(matrix, "dgCMatrix")) {
     non_zero <- length(matrix@x)
     sparsity <- 1 - (non_zero / total_elements)
 
@@ -53,8 +69,18 @@ get_sparsity_info <- function(matrix) {
       sparsity_percent = round(sparsity * 100, 2),
       memory_mb = round(memory_bytes / 1024^2, 2)
     )
+  } else if (inherits(matrix, "sparseMatrix")) {
+    # For other sparse matrix types, use generic approach
+   non_zero <- Matrix::nnzero(matrix)
+    sparsity <- 1 - (non_zero / total_elements)
+    info <- list(
+      total_elements = total_elements,
+      non_zero_elements = non_zero,
+      zero_elements = total_elements - non_zero,
+      sparsity_percent = round(sparsity * 100, 2),
+      memory_mb = as.numeric(object.size(matrix)) / 1024^2
+    )
   } else {
-    total_elements <- length(matrix)
     non_zero <- sum(matrix != 0)
     sparsity <- 1 - (non_zero / total_elements)
 
@@ -121,11 +147,12 @@ format_number <- function(x) {
 #' @keywords internal
 #' @export
 validate_seurat_object <- function(obj) {
-  errors <- c()
-
-  if (!inherits(obj, "Seurat")) {
-    errors <- c(errors, "Object is not a Seurat object")
+  # Check type first and return early - subsequent checks would fail with cryptic errors
+ if (!inherits(obj, "Seurat")) {
+    stop("Object is not a Seurat object")
   }
+
+  errors <- c()
 
   if (ncol(obj) == 0) {
     errors <- c(errors, "Object contains no cells")
