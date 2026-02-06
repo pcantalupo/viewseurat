@@ -67,16 +67,14 @@ structure_diagram_ui <- function(obj) {
       min-width: 140px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     }
-    .vs-assay-card.vs-default {
-      border-left-color: #0d47a1;
-      background: #e8eaf6;
-    }
     .vs-assay-name {
-      font-weight: 700;
+      font-weight: 400;
       font-size: 14px;
       color: #1565c0;
     }
-    .vs-assay-card.vs-default .vs-assay-name { color: #0d47a1; }
+    .vs-assay-card.vs-default .vs-assay-name {
+      font-weight: 700;        /* Add this - make default bold */
+    }
     .vs-assay-dim {
       font-size: 14px;
       color: #616161;
@@ -88,12 +86,12 @@ structure_diagram_ui <- function(obj) {
     }
     .vs-assay-layer-item {
       display: inline-block;
-      background: #e3f2fd;
-      border-radius: 3px;
-      padding: 1px 6px;
-      margin: 2px 2px 0 0;
+      border-radius: 4px;
+      padding: 3px 0px;
+      margin: 2px 4px 0 0;
       font-size: 14px;
-      color: #1565c0;
+      font-weight: 600;         /* bold */
+      color: black;
     }
     .vs-assay-info {
       font-size: 14px;
@@ -209,9 +207,6 @@ structure_diagram_ui <- function(obj) {
 
     shiny::tags$div(class = card_class,
       shiny::tags$div(class = "vs-assay-name", name_label),
-      shiny::tags$div(class = "vs-assay-dim",
-        paste0(format_number(a_nrow), " features x ", format_number(a_ncol), " cells")
-      ),
       shiny::tags$div(class = "vs-assay-layers", layer_tags),
       info_div
     )
