@@ -26,6 +26,7 @@ viewseurat_ui <- function() {
       shinydashboard::sidebarMenu(id = "sidebar",
         shinydashboard::menuItem("Upload", tabName = "upload", icon = shiny::icon("upload")),
         shinydashboard::menuItem("Overview", tabName = "overview", icon = shiny::icon("info-circle")),
+        shinydashboard::menuItem("Structure", tabName = "structure", icon = shiny::icon("sitemap")),
         shinydashboard::menuItem("The Guts", tabName = "guts", icon = shiny::icon("cogs")),
         shinydashboard::menuItem("Assays", tabName = "assays", icon = shiny::icon("table")),
         shinydashboard::menuItem("Metadata", tabName = "metadata", icon = shiny::icon("list")),
@@ -170,6 +171,10 @@ viewseurat_ui <- function() {
 
         shinydashboard::tabItem(tabName = "overview",
           shiny::uiOutput("overview_ui")
+        ),
+
+        shinydashboard::tabItem(tabName = "structure",
+          shiny::uiOutput("structure_ui")
         ),
 
         shinydashboard::tabItem(tabName = "assays",
@@ -384,6 +389,11 @@ viewseurat_server <- function(input, output, session) {
     }
 
     cat("Size in R session:", mem_size, "\n")
+  })
+
+  output$structure_ui <- shiny::renderUI({
+    shiny::req(seurat_obj())
+    structure_diagram_ui(seurat_obj())
   })
 
   shiny::observeEvent(input$goto_assays, {
