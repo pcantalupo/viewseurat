@@ -78,12 +78,12 @@ structure_diagram_ui <- function(obj) {
     }
     .vs-assay-card.vs-default .vs-assay-name { color: #0d47a1; }
     .vs-assay-dim {
-      font-size: 12px;
+      font-size: 14px;
       color: #616161;
       margin: 2px 0 4px 0;
     }
     .vs-assay-layers {
-      font-size: 11px;
+      font-size: 14px;
       color: #757575;
     }
     .vs-assay-layer-item {
@@ -92,8 +92,13 @@ structure_diagram_ui <- function(obj) {
       border-radius: 3px;
       padding: 1px 6px;
       margin: 2px 2px 0 0;
-      font-size: 11px;
+      font-size: 14px;
       color: #1565c0;
+    }
+    .vs-assay-info {
+      font-size: 14px;
+      color: #616161;
+      margin-top: 4px;
     }
     .vs-bottom-row {
       display: flex;
@@ -165,15 +170,50 @@ structure_diagram_ui <- function(obj) {
       shiny::tags$span(class = "vs-assay-layer-item", label)
     })
 
+    # Variable features count
+    n_varfeatures <- tryCatch(
+      length(SeuratObject::VariableFeatures(assay_obj)),
+      error = function(e) 0L
+    )
+
+    # Feature metadata columns
+    feat_meta <- tryCatch({
+      slotnames <- slotNames(assay_obj)
+      if ("meta.data" %in% slotnames) {
+        assay_obj@meta.data
+      } else if ("meta.features" %in% slotnames) {
+        assay_obj@meta.features
+      } else {
+        NULL
+      }
+    }, error = function(e) NULL)
+    n_feat_meta_cols <- if (!is.null(feat_meta)) ncol(feat_meta) else 0L
+
     card_class <- if (is_default) "vs-assay-card vs-default" else "vs-assay-card"
     name_label <- if (is_default) paste0(aname, " *") else aname
+
+    # Build info items
+    info_parts <- character(0)
+    if (n_varfeatures > 0) {
+      info_parts <- c(info_parts, paste0(format_number(n_varfeatures), " variable features"))
+    }
+    if (n_feat_meta_cols > 0) {
+      info_parts <- c(info_parts, paste0(n_feat_meta_cols, " feature metadata columns"))
+    }
+
+    info_div <- if (length(info_parts) > 0) {
+      shiny::tags$div(class = "vs-assay-info",
+        shiny::HTML(paste(info_parts, collapse = " &middot; "))
+      )
+    }
 
     shiny::tags$div(class = card_class,
       shiny::tags$div(class = "vs-assay-name", name_label),
       shiny::tags$div(class = "vs-assay-dim",
         paste0(format_number(a_nrow), " features x ", format_number(a_ncol), " cells")
       ),
-      shiny::tags$div(class = "vs-assay-layers", layer_tags)
+      shiny::tags$div(class = "vs-assay-layers", layer_tags),
+      info_div
     )
   })
 
