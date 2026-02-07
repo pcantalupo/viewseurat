@@ -29,6 +29,7 @@ Imports:
     waiter,
     yaml,
     methods,
+    graphics,
     stats,
     utils
 Suggests:

@@ -261,6 +261,197 @@ get_layer_dim <- function(assay_obj, layer) {
   dim(mat)
 }
 
+#' Build Metadata Column Profile
+#'
+#' Compute a summary data frame with one row per metadata column, including
+#' type, inline HTML distribution bar, completeness, and descriptive stats.
+#'
+#' @param meta A data.frame (typically obj@@meta.data)
+#' @param max_levels Maximum number of factor/character levels to display
+#' @return A data.frame suitable for DT::datatable with escape = FALSE
+#' @keywords internal
+#' @export
+build_metadata_profile <- function(meta, max_levels = 5L) {
+  n_rows <- nrow(meta)
+
+  profiles <- lapply(colnames(meta), function(col) {
+    vals <- meta[[col]]
+    col_class <- class(vals)[1]
+    n_na <- sum(is.na(vals))
+    pct_complete <- round((1 - n_na / n_rows) * 100, 1)
+
+    if (is.numeric(vals)) {
+      info <- .profile_numeric(vals, n_na, n_rows)
+      type_label <- col_class
+    } else if (is.logical(vals)) {
+      info <- .profile_logical(vals, n_na, n_rows)
+      type_label <- "logical"
+    } else if (is.factor(vals)) {
+      info <- .profile_categorical(vals, n_rows, max_levels)
+      type_label <- "factor"
+    } else {
+      # character or other -- treat as factor
+      info <- .profile_categorical(vals, n_rows, max_levels)
+      type_label <- "character"
+    }
+
+    data.frame(
+      Column = col,
+      Type = type_label,
+      Distribution = info$html,
+      Stats = info$stats,
+      Complete = paste0(pct_complete, "%"),
+      stringsAsFactors = FALSE
+    )
+  })
+
+  do.call(rbind, profiles)
+}
+
+# -- internal helpers ----------------------------------------------------------
+
+#' @keywords internal
+.profile_numeric <- function(vals, n_na, n_total) {
+  clean <- vals[!is.na(vals)]
+  if (length(clean) == 0) {
+    return(list(
+      html = "<span style='color:#999'>no data</span>",
+      stats = "all NA"
+    ))
+  }
+
+  # Compute stats
+  q <- stats::quantile(clean, probs = c(0, 0.5, 1))
+  mn <- mean(clean)
+
+  # Build 15-bin histogram as CSS bars
+  brks <- seq(q[1], q[3], length.out = 16)
+  if (brks[1] == brks[16]) {
+    # constant value
+    html <- .css_bar_chart(rep(1, 15), "#4682B4")
+  } else {
+    counts <- graphics::hist(clean, breaks = brks, plot = FALSE)$counts
+    html <- .css_bar_chart(counts, "#4682B4")
+  }
+
+  stats_str <- paste0(
+    "min: ", round(q[1], 3),
+    " | med: ", round(q[2], 3),
+    " | mean: ", round(mn, 3),
+    " | max: ", round(q[3], 3)
+  )
+
+  list(html = html, stats = stats_str)
+}
+
+#' @keywords internal
+.profile_logical <- function(vals, n_na, n_total) {
+  clean <- vals[!is.na(vals)]
+  n_clean <- length(clean)
+  if (n_clean == 0) {
+    return(list(
+      html = "<span style='color:#999'>no data</span>",
+      stats = "all NA"
+    ))
+  }
+
+  n_true <- sum(clean)
+  n_false <- n_clean - n_true
+  pct_true <- round(n_true / n_clean * 100, 1)
+  pct_false <- round(100 - pct_true, 1)
+
+  html <- paste0(
+    "<div style='display:flex;height:16px;width:120px;border-radius:3px;overflow:hidden;'>",
+    "<div style='width:", pct_true, "%;background:#4682B4;' title='TRUE: ",
+    pct_true, "%'></div>",
+    "<div style='width:", pct_false, "%;background:#D3D3D3;' title='FALSE: ",
+    pct_false, "%'></div>",
+    "</div>"
+  )
+
+  stats_str <- paste0("TRUE: ", n_true, " (", pct_true, "%) | FALSE: ", n_false, " (", pct_false, "%)")
+  if (n_na > 0) stats_str <- paste0(stats_str, " | NA: ", n_na)
+
+  list(html = html, stats = stats_str)
+}
+
+#' @keywords internal
+.profile_categorical <- function(vals, n_total, max_levels = 5L) {
+  tbl <- sort(table(vals, useNA = "no"), decreasing = TRUE)
+  n_levels <- length(tbl)
+
+  if (n_levels == 0) {
+    return(list(
+      html = "<span style='color:#999'>no data</span>",
+      stats = "all NA"
+    ))
+  }
+
+  show_levels <- utils::head(tbl, max_levels)
+  palette <- c("#4682B4", "#E07941", "#50A050", "#C75D8A", "#8E6FBF")
+
+  # Build horizontal bars for top levels
+  max_count <- max(show_levels)
+  bars <- vapply(seq_along(show_levels), function(i) {
+    lbl <- names(show_levels)[i]
+    cnt <- show_levels[i]
+    pct <- round(cnt / n_total * 100, 1)
+    bar_w <- round(cnt / max_count * 100)
+    color <- palette[((i - 1) %% length(palette)) + 1]
+    paste0(
+      "<div style='display:flex;align-items:center;gap:4px;margin:1px 0;font-size:11px;line-height:1.3;'>",
+      "<div style='width:", bar_w, "%;min-width:3px;height:12px;background:", color,
+      ";border-radius:2px;flex-shrink:0;max-width:80px;'></div>",
+      "<span style='white-space:nowrap;color:#333;'>", .html_escape(lbl),
+      " (", pct, "%)</span>",
+      "</div>"
+    )
+  }, character(1))
+
+  html <- paste0(
+    "<div style='width:200px;'>",
+    paste(bars, collapse = ""),
+    "</div>"
+  )
+
+  # Stats
+  stats_parts <- paste0(n_levels, " unique")
+  if (n_levels > max_levels) {
+    stats_parts <- paste0(stats_parts, " (showing top ", max_levels, ")")
+  }
+
+  list(html = html, stats = stats_parts)
+}
+
+#' @keywords internal
+.html_escape <- function(x) {
+  x <- gsub("&", "&amp;", x, fixed = TRUE)
+  x <- gsub("<", "&lt;", x, fixed = TRUE)
+  x <- gsub(">", "&gt;", x, fixed = TRUE)
+  x <- gsub("\"", "&quot;", x, fixed = TRUE)
+  x
+}
+
+#' @keywords internal
+.css_bar_chart <- function(counts, color) {
+  max_c <- max(counts)
+  if (max_c == 0) max_c <- 1
+  heights <- round(counts / max_c * 20)
+
+  bars <- vapply(heights, function(h) {
+    paste0(
+      "<div style='display:inline-block;width:6px;height:", h,
+      "px;background:", color, ";margin-right:1px;border-radius:1px;vertical-align:bottom;'></div>"
+    )
+  }, character(1))
+
+  paste0(
+    "<div style='display:inline-flex;align-items:flex-end;height:22px;'>",
+    paste(bars, collapse = ""),
+    "</div>"
+  )
+}
+
 #' Get Seurat Object Information
 #'
 #' Generate a comprehensive summary of a Seurat object.

@@ -592,13 +592,13 @@ viewseurat_server <- function(input, output, session) {
           solidHeader = TRUE,
           width = 12,
           shiny::div(style = "display: flex; gap: 15px; justify-content: center; padding: 10px;",
+            shiny::actionButton("scroll_to_summary", "Column Profiler",
+                        icon = shiny::icon("chart-bar"),
+                        class = "btn-info",
+                        style = "min-width: 150px;"),
             shiny::actionButton("scroll_to_table", "Cell Metadata",
                         icon = shiny::icon("table"),
                         class = "btn-primary",
-                        style = "min-width: 150px;"),
-            shiny::actionButton("scroll_to_summary", "Metadata Summary",
-                        icon = shiny::icon("chart-bar"),
-                        class = "btn-info",
                         style = "min-width: 150px;"),
             shiny::actionButton("scroll_to_plots", "Distribution Plots",
                         icon = shiny::icon("chart-area"),
@@ -609,22 +609,22 @@ viewseurat_server <- function(input, output, session) {
       ),
       shiny::column(12,
         shinydashboard::box(
+          id = "metadata_summary_box",
+          title = "Column Profiler",
+          status = "info",
+          solidHeader = TRUE,
+          width = 12,
+          shinycssloaders::withSpinner(DT::DTOutput("metadata_profiler"))
+        )
+      ),
+      shiny::column(12,
+        shinydashboard::box(
           id = "metadata_table_box",
           title = "Cell Metadata",
           status = "primary",
           solidHeader = TRUE,
           width = 12,
           shinycssloaders::withSpinner(DT::DTOutput("metadata_table"))
-        )
-      ),
-      shiny::column(12,
-        shinydashboard::box(
-          id = "metadata_summary_box",
-          title = "Metadata Summary",
-          status = "info",
-          solidHeader = TRUE,
-          width = 12,
-          shiny::verbatimTextOutput("metadata_summary")
         )
       ),
       shiny::column(12,
@@ -660,10 +660,26 @@ viewseurat_server <- function(input, output, session) {
     )
   }, server = TRUE)
 
-  output$metadata_summary <- shiny::renderPrint({
+  output$metadata_profiler <- DT::renderDT({
     shiny::req(seurat_obj())
-    summary(seurat_obj()@meta.data)
-  })
+    profile_df <- build_metadata_profile(seurat_obj()@meta.data)
+
+    DT::datatable(
+      profile_df,
+      escape = FALSE,
+      rownames = FALSE,
+      options = list(
+        pageLength = 50,
+        scrollX = TRUE,
+        dom = "ftp",
+        columnDefs = list(
+          list(width = '200px', targets = 2),
+          list(width = '80px', targets = 4)
+        )
+      ),
+      class = 'cell-border stripe'
+    )
+  }, server = FALSE)
 
   output$metadata_plot <- shiny::renderPlot({
     shiny::req(seurat_obj(), input$metadata_column)
