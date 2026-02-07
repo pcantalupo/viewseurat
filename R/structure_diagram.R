@@ -33,7 +33,7 @@ structure_diagram_ui <- function(obj) {
       margin-bottom: 2px;
     }
     .vs-structure-subtitle {
-      font-size: 14px;
+      font-size: 16px;
       color: #616161;
       margin-bottom: 18px;
     }
@@ -44,7 +44,7 @@ structure_diagram_ui <- function(obj) {
     }
     .vs-section-label {
       font-weight: 700;
-      font-size: 13px;
+      font-size: 16px;
       margin-bottom: 8px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -69,19 +69,19 @@ structure_diagram_ui <- function(obj) {
     }
     .vs-assay-name {
       font-weight: 400;
-      font-size: 14px;
+      font-size: 16px;
       color: #1565c0;
     }
     .vs-assay-card.vs-default .vs-assay-name {
       font-weight: 700;        /* Add this - make default bold */
     }
     .vs-assay-dim {
-      font-size: 14px;
+      font-size: 16px;
       color: #616161;
       margin: 2px 0 4px 0;
     }
     .vs-assay-layers {
-      font-size: 14px;
+      font-size: 16px;
       color: #757575;
     }
     .vs-assay-layer-item {
@@ -89,12 +89,12 @@ structure_diagram_ui <- function(obj) {
       border-radius: 4px;
       padding: 3px 0px;
       margin: 2px 4px 0 0;
-      font-size: 14px;
+      font-size: 16px;
       font-weight: 600;         /* bold */
       color: black;
     }
     .vs-assay-info {
-      font-size: 14px;
+      font-size: 16px;
       color: #616161;
       margin-top: 4px;
     }
@@ -129,11 +129,11 @@ structure_diagram_ui <- function(obj) {
     }
     .vs-images-section .vs-section-label { color: #c2185b; }
     .vs-item {
-      font-size: 13px;
+      font-size: 16px;
       color: #424242;
     }
     .vs-empty {
-      font-size: 13px;
+      font-size: 16px;
       color: #9e9e9e;
       font-style: italic;
     }
