@@ -25,8 +25,7 @@ viewseurat_ui <- function() {
     shinydashboard::dashboardSidebar(
       shinydashboard::sidebarMenu(id = "sidebar",
         shinydashboard::menuItem("Upload", tabName = "upload", icon = shiny::icon("upload")),
-        shinydashboard::menuItem("Overview", tabName = "overview", icon = shiny::icon("info-circle")),
-        shinydashboard::menuItem("Structure", tabName = "structure", icon = shiny::icon("sitemap")),
+        shinydashboard::menuItem("Overview", tabName = "structure", icon = shiny::icon("sitemap")),
         shinydashboard::menuItem("The Guts", tabName = "guts", icon = shiny::icon("cogs")),
         shinydashboard::menuItem("Assays", tabName = "assays", icon = shiny::icon("table")),
         shinydashboard::menuItem("Metadata", tabName = "metadata", icon = shiny::icon("list")),
@@ -169,10 +168,6 @@ viewseurat_ui <- function() {
           )
         ),
 
-        shinydashboard::tabItem(tabName = "overview",
-          shiny::uiOutput("overview_ui")
-        ),
-
         shinydashboard::tabItem(tabName = "structure",
           shiny::uiOutput("structure_ui")
         ),
@@ -230,7 +225,7 @@ viewseurat_server <- function(input, output, session) {
       uploaded_filename("")
     }
     # Auto-navigate to Overview tab when object is preloaded
-    shinydashboard::updateTabItems(session, "sidebar", "overview")
+    shinydashboard::updateTabItems(session, "sidebar", "structure")
   }
 
   output$file_title <- shiny::renderUI({
@@ -294,7 +289,7 @@ viewseurat_server <- function(input, output, session) {
       # Hide waiter and navigate
       upload_waiter$hide()
       shiny::showNotification("Seurat object loaded successfully!", type = "message")
-      shinydashboard::updateTabItems(session, "sidebar", "overview")
+      shinydashboard::updateTabItems(session, "sidebar", "structure")
 
     }, error = function(e) {
       upload_waiter$hide()
@@ -305,36 +300,32 @@ viewseurat_server <- function(input, output, session) {
     })
   })
 
-  output$overview_ui <- shiny::renderUI({
+  output$structure_ui <- shiny::renderUI({
     shiny::req(seurat_obj())
     obj <- seurat_obj()
 
-    shiny::fluidRow(
-      shiny::column(12,
-        shinydashboard::box(
-          title = "Standard Seurat summary",
-          status = "info",
-          solidHeader = TRUE,
-          width = 12,
-          shiny::verbatimTextOutput("object_summary")
-        )
-      ),
-      shiny::column(12,
-        shinydashboard::box(
-          title = "View Seurat summary",
-          status = "primary",
-          solidHeader = TRUE,
-          width = 12,
-          shiny::verbatimTextOutput("seurat_info_output")
-        )
-      ),
-      shiny::column(12,
-        shinydashboard::box(
-          title = "Size Info",
-          status = "info",
-          solidHeader = TRUE,
-          width = 12,
-          shiny::verbatimTextOutput("size_info_output")
+    shiny::tagList(
+      structure_diagram_ui(obj),
+      shiny::fluidRow(style = "margin-top: 20px;",
+        shiny::column(12,
+          shinydashboard::box(
+            title = "Object Summary",
+            status = "primary",
+            solidHeader = TRUE,
+            width = 12,
+            shiny::verbatimTextOutput("seurat_info_output"),
+            shiny::hr(),
+            shiny::verbatimTextOutput("object_summary")
+          )
+        ),
+        shiny::column(12,
+          shinydashboard::box(
+            title = "Size Info",
+            status = "info",
+            solidHeader = TRUE,
+            width = 12,
+            shiny::verbatimTextOutput("size_info_output")
+          )
         )
       )
     )
@@ -389,11 +380,6 @@ viewseurat_server <- function(input, output, session) {
     }
 
     cat("Size in R session:", mem_size, "\n")
-  })
-
-  output$structure_ui <- shiny::renderUI({
-    shiny::req(seurat_obj())
-    structure_diagram_ui(seurat_obj())
   })
 
   shiny::observeEvent(input$goto_assays, {
