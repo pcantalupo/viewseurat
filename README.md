@@ -1,67 +1,33 @@
-# Seurat Object Viewer
+# viewseurat
 
-An interactive R Shiny dashboard for exploring Seurat v5 single-cell RNA-seq objects.
+Read-only Shiny app for viewing Seurat v5 objects. Upload an .rds or .qs2 file, or pass a Seurat object directly from R.
 
-# Overview
+## Installation
 
-This dashboard provides a comprehensive graphical interface to view all components of a Seurat object without performing additional analysis. It's designed for:
-- Exploring the internal structure of Seurat objects
-- Reviewing metadata and analysis results
-- Quality control and validation
-
-# Features
-
-## 🧬 Overview
-- Summary of object structure and contents
-- Object-level metadata and statistics
-
-## 📊 Assays
-- At a glance summary of all assays
-- View the `counts`, `data`, and `scale.data` matrices
-- Feature and cell metadata
-- Sparsity statistics
-
-## 🎨 Reductions
-- Interactive 2D plots (UMAP, tSNE, PCA, etc.)
-- Color by metadata columns
-
-## 📋 Metadata
-- Interactive cell metadata table with search capabilities
-- Summary statistics and distribution plots
-
-## 🗺️ Images (Spatial)
-- Tissue image visualization
-- Spot-level metadata overlay
-
-# Installation
-Install the development version from GitHub:
-
-``` r
+```r
 # install.packages("devtools")
 devtools::install_github("pcantalupo/viewseurat")
 ```
 
-# Usage
+## Usage
 
-## Basic Usage
-1. Start the app:
 ```r
-# In R console
-shiny::runApp("path/to/viewseurat")
-
-# Or in RStudio, open app.R and click "Run App"
-
-# Or use the ViewSeurat() to view a Seurat object directly
+# View an object directly
 ViewSeurat(seurat_obj)
 
-# View with custom title
-ViewSeurat(seurat_obj, title = "My Seurat Object")
+# Launch the upload interface (no object)
+ViewSeurat()
 ```
 
-2. Upload your Seurat object (.rds or .qs2 file) via drag-and-drop or file browser
-3. Explore the various components using the sidebar navigation
+You can also open `app.R` in RStudio and click "Run App" to get the upload interface.
 
-# Miscellaneous
-This is a visualization tool designed for exploring existing Seurat objects. If you need analysis capabilities, please use the Seurat package directly.
+## What you can view
 
+- **Overview** — Object structure diagram, assay summary, and size on disk.
+- **Assays** — counts, data, and scale.data matrices, variable features, feature metadata.
+- **Metadata** — Per-column summary with distribution graphics, searchable table, and distribution plots.
+- **Reductions** — 2D scatter plots (UMAP, tSNE, PCA, etc.) colored by metadata. Shows which assay was used for dimensionality reduction.
+- **Images** — Spatial tissue plots colored by metadata or gene expression (if available)
+- **The Guts** — Raw S4 slot inspection with clickable buttons for all slots
 
+This is a viewer only. It does not modify or analyze the Seurat object.
