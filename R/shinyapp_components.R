@@ -30,8 +30,7 @@ viewseurat_ui <- function() {
         shinydashboard::menuItem("Assays", tabName = "assays", icon = shiny::icon("table")),
         shinydashboard::menuItem("Metadata", tabName = "metadata", icon = shiny::icon("list")),
         shinydashboard::menuItem("Reductions", tabName = "reductions", icon = shiny::icon("project-diagram")),
-        shinydashboard::menuItem("Images", tabName = "images", icon = shiny::icon("image")),
-        shinydashboard::menuItem("Graphs", tabName = "graphs", icon = shiny::icon("share-alt"))
+        shinydashboard::menuItem("Images", tabName = "images", icon = shiny::icon("image"))
       )
     ),
 
@@ -182,10 +181,6 @@ viewseurat_ui <- function() {
 
         shinydashboard::tabItem(tabName = "metadata",
           shiny::uiOutput("metadata_ui")
-        ),
-
-        shinydashboard::tabItem(tabName = "graphs",
-          shiny::uiOutput("graphs_ui")
         ),
 
         shinydashboard::tabItem(tabName = "images",
@@ -691,55 +686,6 @@ viewseurat_server <- function(input, output, session) {
       "var el = document.getElementById('metadata_plot_box');
        if(el) { el.scrollIntoView({behavior: 'smooth', block: 'start'}); }"
     )
-  })
-
-  output$graphs_ui <- shiny::renderUI({
-    shiny::req(seurat_obj())
-    obj <- seurat_obj()
-
-    if (length(obj@graphs) == 0) {
-      return(shinydashboard::box(
-        title = "Graphs",
-        status = "warning",
-        solidHeader = TRUE,
-        width = 12,
-        "No graphs found in this object."
-      ))
-    }
-
-    graph_names <- names(obj@graphs)
-
-    shiny::fluidRow(
-      shiny::column(12,
-        shinydashboard::box(
-          title = "Neighbor Graphs",
-          status = "primary",
-          solidHeader = TRUE,
-          width = 12,
-          shiny::selectInput("selected_graph", "Select Graph:", choices = graph_names)
-        )
-      ),
-      shiny::column(12,
-        shinydashboard::box(
-          title = "Graph Information",
-          status = "info",
-          solidHeader = TRUE,
-          width = 12,
-          shiny::verbatimTextOutput("graph_info")
-        )
-      )
-    )
-  })
-
-  output$graph_info <- shiny::renderPrint({
-    shiny::req(seurat_obj(), input$selected_graph)
-    obj <- seurat_obj()
-    graph <- obj@graphs[[input$selected_graph]]
-
-    cat("Graph:", input$selected_graph, "\n")
-    cat("Dimensions:", dim(graph), "\n")
-    cat("Number of edges:", sum(graph > 0) / 2, "\n")
-    cat("Sparsity:", 1 - (sum(graph > 0) / length(graph)), "\n")
   })
 
   output$images_ui <- shiny::renderUI({

@@ -6,10 +6,14 @@ An interactive R Shiny dashboard for exploring Seurat v5 single-cell RNA-seq obj
 
 This dashboard provides a comprehensive graphical interface to view all components of a Seurat object without performing additional analysis. It's designed for:
 - Exploring the internal structure of Seurat objects
-- Reviewing analysis results
+- Reviewing metadata and analysis results
 - Quality control and validation
 
 # Features
+
+## 🧬 Overview
+- Summary of object structure and contents
+- Object-level metadata and statistics
 
 ## 📊 Assays
 - At a glance summary of all assays
@@ -24,9 +28,6 @@ This dashboard provides a comprehensive graphical interface to view all componen
 ## 📋 Metadata
 - Interactive cell metadata table with search capabilities
 - Summary statistics and distribution plots
-
-## 🔗 Graphs
-- Neighbor graph statistics (dimensions, edges, sparsity)
 
 ## 🗺️ Images (Spatial)
 - Tissue image visualization
@@ -59,21 +60,6 @@ ViewSeurat(seurat_obj, title = "My Seurat Object")
 
 2. Upload your Seurat object (.rds or .qs2 file) via drag-and-drop or file browser
 3. Explore the various components using the sidebar navigation
-
-# Project Structure
-```
-viewseurat/
-├── app.R                           # Development launcher (sources R/, runs shinyApp)
-├── DESCRIPTION                     # Package metadata
-├── R/
-│   ├── shinyapp_components.R       # Main UI and server logic
-│   ├── ViewSeurat.R                # ViewSeurat() exported function
-│   ├── seurat_utils.R              # Seurat object utilities
-│   ├── plot_functions.R            # Plotting functions
-│   └── ui_modules.R                # Shiny UI modules
-└── inst/
-    └── extdata/                    # Package data files
-```
 
 # Miscellaneous
 This is a visualization tool designed for exploring existing Seurat objects. If you need analysis capabilities, please use the Seurat package directly.
