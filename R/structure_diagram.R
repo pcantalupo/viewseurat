@@ -143,7 +143,7 @@ structure_diagram_ui <- function(obj) {
       border-radius: 3px;
       padding: 1px 6px;
       margin: 2px 3px 0 0;
-      font-size: 12px;
+      font-size: 16px;
     }
   "))
 
@@ -231,7 +231,8 @@ structure_diagram_ui <- function(obj) {
   if (length(reduction_names) > 0) {
     red_badges <- lapply(reduction_names, function(rname) {
       n_dims <- ncol(obj@reductions[[rname]])
-      shiny::tags$span(class = "vs-badge", paste0(rname, " (", n_dims, ")"))
+      assay_used <- obj@reductions[[rname]]@assay.used
+      shiny::tags$span(class = "vs-badge", paste0(rname, " (", n_dims, ", ", assay_used, ")"))
     })
     red_content <- shiny::tags$div(class = "vs-item", red_badges)
   } else {
