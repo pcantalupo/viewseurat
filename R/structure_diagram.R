@@ -288,8 +288,8 @@ structure_diagram_ui <- function(obj) {
         reductions_section
       ),
       shiny::tags$div(class = "vs-bottom-row",
-        graphs_section,
-        images_section
+        images_section,
+        graphs_section
       )
     )
   )

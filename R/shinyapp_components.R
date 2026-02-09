@@ -304,21 +304,14 @@ viewseurat_server <- function(input, output, session) {
       shiny::fluidRow(style = "margin-top: 20px;",
         shiny::column(12,
           shinydashboard::box(
-            title = "Object Summary",
+            title = "Seurat Summary",
             status = "primary",
             solidHeader = TRUE,
             width = 12,
             shiny::verbatimTextOutput("seurat_info_output"),
             shiny::hr(),
-            shiny::verbatimTextOutput("object_summary")
-          )
-        ),
-        shiny::column(12,
-          shinydashboard::box(
-            title = "Size Info",
-            status = "info",
-            solidHeader = TRUE,
-            width = 12,
+            shiny::verbatimTextOutput("object_summary"),
+            shiny::hr(),
             shiny::verbatimTextOutput("size_info_output")
           )
         )
