@@ -15,8 +15,9 @@ need to touch a layer's underlying matrix on an arbitrary assay type.
 ## Critical: Namespace Prefixes
 ALWAYS use explicit namespace prefixes (`SeuratObject::Layers()`, `shiny::renderUI()`, `DT::datatable()`). The `app.R` launcher sources R/ files directly, bypassing NAMESPACE - code must work in that context.
 
-## Settings
+## Sundry
 Keep `settings.local.json` in `.claude/` directory (not project root).
-
-## Miscellaneous
+Always save plan files to the project-local ./claude/plans/ directory, never to ~/.claude/plans/
 Don't commit changes automatically. Wait for explicit /ship or commit request.
+
+
