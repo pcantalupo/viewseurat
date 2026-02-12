@@ -127,15 +127,7 @@ get_top_variable_features <- function(obj, assay_name, n = 20) {
 #' @keywords internal
 #' @export
 format_number <- function(x) {
-  if (x >= 1e9) {
-    return(paste0(round(x / 1e9, 2), "B"))
-  } else if (x >= 1e6) {
-    return(paste0(round(x / 1e6, 2), "M"))
-  } else if (x >= 1e3) {
-    return(paste0(round(x / 1e3, 2), "K"))
-  } else {
-    return(as.character(x))
-  }
+  format(as.integer(x), big.mark = ",")
 }
 
 #' Validate Seurat Object

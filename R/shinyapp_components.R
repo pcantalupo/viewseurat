@@ -299,21 +299,75 @@ viewseurat_server <- function(input, output, session) {
     shiny::req(seurat_obj())
     obj <- seurat_obj()
 
+    summary_css <- shiny::tags$style(shiny::HTML("
+      .vs-summary-outer {
+        border: 2px solid #bdbdbd;
+        border-radius: 10px;
+        background: #fafafa;
+        padding: 20px;
+        max-width: 900px;
+        margin-top: 20px;
+        font-family: 'Helvetica Neue', Arial, sans-serif;
+      }
+      .vs-summary-title {
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 14px;
+      }
+      .vs-summary-section {
+        border-radius: 8px;
+        padding: 12px 14px;
+        margin-bottom: 14px;
+      }
+      .vs-summary-section:last-child {
+        margin-bottom: 0;
+      }
+      .vs-summary-label {
+        font-weight: 700;
+        font-size: 16px;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .vs-summary-section pre {
+        background: #fff;
+        border: 1px solid rgba(0,0,0,0.1);
+        border-radius: 6px;
+        margin: 0;
+      }
+      .vs-info-section {
+        background: #e0f2f1;
+        border: 1.5px solid #00897b;
+      }
+      .vs-info-section .vs-summary-label { color: #00897b; }
+      .vs-obj-section {
+        background: #e8eaf6;
+        border: 1.5px solid #3949ab;
+      }
+      .vs-obj-section .vs-summary-label { color: #3949ab; }
+      .vs-size-section {
+        background: #fff8e1;
+        border: 1.5px solid #f9a825;
+      }
+      .vs-size-section .vs-summary-label { color: #f9a825; }
+    "))
+
     shiny::tagList(
       structure_diagram_ui(obj),
-      shiny::fluidRow(style = "margin-top: 20px;",
-        shiny::column(12,
-          shinydashboard::box(
-            title = "Seurat Summary",
-            status = "primary",
-            solidHeader = TRUE,
-            width = 12,
-            shiny::verbatimTextOutput("seurat_info_output"),
-            shiny::hr(),
-            shiny::verbatimTextOutput("object_summary"),
-            shiny::hr(),
-            shiny::verbatimTextOutput("size_info_output")
-          )
+      summary_css,
+      shiny::tags$div(class = "vs-summary-outer",
+        shiny::tags$div(class = "vs-summary-title", "Seurat Summary"),
+        shiny::tags$div(class = "vs-summary-section vs-info-section",
+          shiny::tags$div(class = "vs-summary-label", "Seurat Info"),
+          shiny::verbatimTextOutput("seurat_info_output")
+        ),
+        shiny::tags$div(class = "vs-summary-section vs-obj-section",
+          shiny::tags$div(class = "vs-summary-label", "Standard Seurat Summary"),
+          shiny::verbatimTextOutput("object_summary")
+        ),
+        shiny::tags$div(class = "vs-summary-section vs-size-section",
+          shiny::tags$div(class = "vs-summary-label", "Size"),
+          shiny::verbatimTextOutput("size_info_output")
         )
       )
     )

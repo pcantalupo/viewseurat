@@ -108,6 +108,24 @@ structure_diagram_ui <- function(obj) {
       min-width: 180px;
       margin-bottom: 0;
     }
+    .vs-idents-section {
+      background: #fff8e1;
+      border: 1.5px solid #f9a825;
+    }
+    .vs-idents-section .vs-section-label { color: #f9a825; text-transform: none; }
+    .vs-ident-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .vs-ident-badge {
+      display: inline-block;
+      background: rgba(0,0,0,0.07);
+      border-radius: 3px;
+      padding: 1px 6px;
+      font-size: 16px;
+    }
     .vs-meta-section {
       background: #e8f5e9;
       border: 1.5px solid #388e3c;
@@ -188,7 +206,7 @@ structure_diagram_ui <- function(obj) {
     n_feat_meta_cols <- if (!is.null(feat_meta)) ncol(feat_meta) else 0L
 
     card_class <- if (is_default) "vs-assay-card vs-default" else "vs-assay-card"
-    name_label <- if (is_default) paste0(aname, " *") else aname
+    name_label <- if (is_default) paste0(aname, " (default)") else aname
 
     # Build info items
     info_parts <- character(0)
@@ -215,6 +233,34 @@ structure_diagram_ui <- function(obj) {
   assays_section <- shiny::tags$div(class = "vs-section vs-assays-section",
     shiny::tags$div(class = "vs-section-label", "Assays"),
     shiny::tags$div(class = "vs-assay-cards", assay_cards)
+  )
+
+  # --- Idents section ---
+  ident_label <- FindIdentLabel(obj)
+  idents_table <- table(Seurat::Idents(obj))
+  idents_sorted <- sort(idents_table, decreasing = TRUE)
+  n_levels <- length(idents_sorted)
+
+  max_badges <- 20L
+  show_idents <- utils::head(idents_sorted, max_badges)
+  ident_badges <- lapply(seq_along(show_idents), function(i) {
+    shiny::tags$span(
+      class = "vs-ident-badge",
+      paste0(names(show_idents)[i], " (", format_number(show_idents[[i]]), ")")
+    )
+  })
+  if (n_levels > max_badges) {
+    ident_badges <- c(ident_badges, list(
+      shiny::tags$span(class = "vs-ident-badge", paste0("+ ", n_levels - max_badges, " more"))
+    ))
+  }
+
+  idents_section <- shiny::tags$div(class = "vs-section vs-idents-section",
+    shiny::tags$div(class = "vs-section-label", paste0("Idents (", ident_label, ")")),
+    shiny::tags$div(class = "vs-item",
+      paste0(n_levels, " levels across ", format_number(n_cells), " cells")
+    ),
+    shiny::tags$div(class = "vs-ident-badges", ident_badges)
   )
 
   # --- Metadata section ---
@@ -276,14 +322,8 @@ structure_diagram_ui <- function(obj) {
     css,
     shiny::tags$div(class = "vs-structure-outer",
       shiny::tags$div(class = "vs-structure-title", "Seurat Object"),
-      shiny::tags$div(class = "vs-structure-subtitle",
-        paste0(
-          format_number(n_features), " features x ",
-          format_number(n_cells), " cells",
-          "    |    * = default assay"
-        )
-      ),
       assays_section,
+      idents_section,
       shiny::tags$div(class = "vs-bottom-row",
         meta_section,
         reductions_section
