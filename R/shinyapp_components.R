@@ -206,6 +206,7 @@ viewseurat_server <- function(input, output, session) {
   seurat_obj <- shiny::reactiveVal(NULL)
   file_size_bytes <- shiny::reactiveVal(NULL)
   uploaded_filename <- shiny::reactiveVal("")
+  assay_nav_override <- shiny::reactiveVal(NULL)
 
   # Check if object was pre-loaded via ViewSeurat()
   preloaded_obj <- shiny::getShinyOption("viewseurat.obj", default = NULL)
@@ -436,6 +437,19 @@ viewseurat_server <- function(input, output, session) {
     shinydashboard::updateTabItems(session, "sidebar", "metadata")
   })
 
+  shiny::observeEvent(input$goto_images, {
+    shinydashboard::updateTabItems(session, "sidebar", "images")
+  })
+
+  shiny::observeEvent(input$goto_assay_card, {
+    assay_name <- input$goto_assay_card
+    shiny::req(seurat_obj(), assay_name)
+    obj <- seurat_obj()
+    assay_nav_override(assay_name)
+    shinydashboard::updateTabItems(session, "sidebar", "assays")
+    initialize_assay(assay_name, obj)
+  })
+
   output$assays_ui <- shiny::renderUI({
     shiny::req(seurat_obj())
     obj <- seurat_obj()
@@ -495,15 +509,22 @@ viewseurat_server <- function(input, output, session) {
     }
   })
 
-  # Initialize and select the default assay when the Assays tab is first visited
+  # Initialize and select the appropriate assay when the Assays tab is visited
   shiny::observeEvent(input$sidebar, {
     if (input$sidebar == "assays") {
       shiny::req(seurat_obj())
       obj <- seurat_obj()
-      default_assay <- Seurat::DefaultAssay(obj)
-      initialize_assay(default_assay, obj)
-      # Auto-select the default assay tab
-      shiny::updateTabsetPanel(session, "assay_tabs", selected = default_assay)
+      override <- assay_nav_override()
+      if (!is.null(override)) {
+        # Navigated via assay card click — select the specific assay
+        shiny::updateTabsetPanel(session, "assay_tabs", selected = override)
+        assay_nav_override(NULL)
+      } else {
+        # Normal sidebar navigation — select the default assay
+        default_assay <- Seurat::DefaultAssay(obj)
+        initialize_assay(default_assay, obj)
+        shiny::updateTabsetPanel(session, "assay_tabs", selected = default_assay)
+      }
     }
   }, ignoreInit = TRUE)
 

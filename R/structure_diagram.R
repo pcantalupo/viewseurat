@@ -163,6 +163,14 @@ structure_diagram_ui <- function(obj) {
       margin: 2px 3px 0 0;
       font-size: 16px;
     }
+    .vs-clickable {
+      cursor: pointer;
+      transition: box-shadow 0.2s ease, transform 0.2s ease;
+    }
+    .vs-clickable:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      transform: translateY(-2px);
+    }
   "))
 
   # --- Assay cards ---
@@ -222,7 +230,12 @@ structure_diagram_ui <- function(obj) {
       )
     }
 
-    shiny::tags$div(class = card_class,
+    shiny::tags$div(
+      class = paste(card_class, "vs-clickable"),
+      onclick = sprintf(
+        "Shiny.setInputValue('goto_assay_card', '%s', {priority: 'event'});",
+        aname
+      ),
       shiny::tags$div(class = "vs-assay-name", name_label),
       shiny::tags$div(class = "vs-assay-layers", layer_tags),
       info_div
@@ -263,7 +276,9 @@ structure_diagram_ui <- function(obj) {
   )
 
   # --- Metadata section ---
-  meta_section <- shiny::tags$div(class = "vs-section vs-meta-section",
+  meta_section <- shiny::tags$div(
+    class = "vs-section vs-meta-section vs-clickable",
+    onclick = "Shiny.setInputValue('goto_metadata', Date.now(), {priority: 'event'});",
     shiny::tags$div(class = "vs-section-label", "Metadata"),
     shiny::tags$div(class = "vs-item",
       paste0(format_number(n_cells), " cells"),
@@ -283,7 +298,9 @@ structure_diagram_ui <- function(obj) {
   } else {
     red_content <- shiny::tags$div(class = "vs-empty", "None")
   }
-  reductions_section <- shiny::tags$div(class = "vs-section vs-reductions-section",
+  reductions_section <- shiny::tags$div(
+    class = "vs-section vs-reductions-section vs-clickable",
+    onclick = "Shiny.setInputValue('goto_reductions', Date.now(), {priority: 'event'});",
     shiny::tags$div(class = "vs-section-label", "Reductions"),
     red_content
   )
@@ -311,7 +328,9 @@ structure_diagram_ui <- function(obj) {
   } else {
     img_content <- shiny::tags$div(class = "vs-empty", "None")
   }
-  images_section <- shiny::tags$div(class = "vs-section vs-images-section",
+  images_section <- shiny::tags$div(
+    class = "vs-section vs-images-section vs-clickable",
+    onclick = "Shiny.setInputValue('goto_images', Date.now(), {priority: 'event'});",
     shiny::tags$div(class = "vs-section-label", "Images"),
     img_content
   )

@@ -19,5 +19,8 @@ ALWAYS use explicit namespace prefixes (`SeuratObject::Layers()`, `shiny::render
 Keep `settings.local.json` in `.claude/` directory (not project root).
 Always save plan files to the project-local ./claude/plans/ directory, never to ~/.claude/plans/
 Don't commit changes automatically. Wait for explicit /ship or commit request.
+When implementing a plan, create a new branch.
+
+
 
 

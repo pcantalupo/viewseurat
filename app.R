@@ -27,6 +27,7 @@ library(shinyjs)
 source("R/seurat_utils.R")
 source("R/plot_functions.R")
 source("R/assay_panel.R")
+source("R/structure_diagram.R")
 source("R/shinyapp_components.R")
 
 # Set max upload size (10 GB)
