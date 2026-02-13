@@ -168,7 +168,7 @@ structure_diagram_ui <- function(obj) {
   # --- Assay cards ---
   assay_cards <- lapply(assay_names, function(aname) {
     assay_obj <- obj@assays[[aname]]
-    layers <- SeuratObject::Layers(assay_obj)
+    layers <- union(SeuratObject::Layers(assay_obj), c("counts", "data", "scale.data"))
     is_default <- aname == default_assay
 
     # Get assay-level dimensions
@@ -178,12 +178,11 @@ structure_diagram_ui <- function(obj) {
     # Per-layer dimension tags
     layer_tags <- lapply(layers, function(lname) {
       ld <- get_layer_dim(assay_obj, lname)
-      label <- if (ld[1] > 0 && ld[2] > 0) {
-        paste0(lname, " [", format_number(ld[1]), " x ", format_number(ld[2]), "]")
-      } else {
-        lname
-      }
-      shiny::tags$span(class = "vs-assay-layer-item", label)
+      shiny::tags$span(class = "vs-assay-layer-item",
+        lname,
+        shiny::tags$span(
+          style = "font-weight: 300;",
+          paste0(" [", format_number(ld[1]), " x ", format_number(ld[2]), "]")))
     })
 
     # Variable features count
