@@ -775,21 +775,41 @@ viewseurat_server <- function(input, output, session) {
 
     output$spatial_plot <- shiny::renderPlot({
       obj <- seurat_obj()
+      img_name <- input$selected_image
+      # VisiumV1/V2 inherit from FOV but work with SpatialPlot (tissue image).
+      # Plain FOV (Atomx, Xenium, MERFISH) needs ImageDimPlot/ImageFeaturePlot.
+      is_visium <- inherits(obj@images[[img_name]], "VisiumV1") ||
+        inherits(obj@images[[img_name]], "VisiumV2")
+      is_fov <- !is_visium && inherits(obj@images[[img_name]], "FOV")
 
       if (is.null(input$spatial_color_by) || input$spatial_color_by == "None") {
-        Seurat::SpatialPlot(obj, images = input$selected_image)
+        if (is_fov) {
+          Seurat::ImageDimPlot(obj, fov = img_name)
+        } else {
+          Seurat::SpatialPlot(obj, images = img_name)
+        }
       } else if (input$spatial_color_by %in% colnames(obj@meta.data)) {
         # Metadata column - check if numeric or categorical
         if (is.numeric(obj@meta.data[[input$spatial_color_by]])) {
-          # Numeric metadata: use SpatialFeaturePlot for continuous color scale
-          Seurat::SpatialFeaturePlot(obj, features = input$spatial_color_by, images = input$selected_image)
+          if (is_fov) {
+            Seurat::ImageFeaturePlot(obj, features = input$spatial_color_by, fov = img_name)
+          } else {
+            Seurat::SpatialFeaturePlot(obj, features = input$spatial_color_by, images = img_name)
+          }
         } else {
-          # Categorical metadata: use SpatialPlot with group.by
-          Seurat::SpatialPlot(obj, images = input$selected_image, group.by = input$spatial_color_by)
+          if (is_fov) {
+            Seurat::ImageDimPlot(obj, fov = img_name, group.by = input$spatial_color_by)
+          } else {
+            Seurat::SpatialPlot(obj, images = img_name, group.by = input$spatial_color_by)
+          }
         }
       } else {
         # It's a feature/gene
-        Seurat::SpatialFeaturePlot(obj, features = input$spatial_color_by, images = input$selected_image)
+        if (is_fov) {
+          Seurat::ImageFeaturePlot(obj, features = input$spatial_color_by, fov = img_name)
+        } else {
+          Seurat::SpatialFeaturePlot(obj, features = input$spatial_color_by, images = img_name)
+        }
       }
     })
   })
