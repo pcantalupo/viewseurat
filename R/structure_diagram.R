@@ -173,7 +173,8 @@ structure_diagram_ui <- function(obj) {
   # --- Assay cards ---
   assay_cards <- lapply(assay_names, function(aname) {
     assay_obj <- obj@assays[[aname]]
-    layers <- union(SeuratObject::Layers(assay_obj), c("counts", "data", "scale.data"))
+    canonical <- c("counts", "data", "scale.data")
+    layers <- c(canonical, setdiff(SeuratObject::Layers(assay_obj), canonical))
     is_default <- aname == default_assay
 
     # Get assay-level dimensions

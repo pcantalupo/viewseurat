@@ -1,10 +1,10 @@
 # CLAUDE.md
 
-Read-only Shiny app viewer for Seurat v5 objects.
+Read-only Shiny app viewer for Seurat v4 and v5 objects.
 
 ## Core Constraints
 - Do NOT add analysis functions, data transformations, or object modifications.
-- Seurat v5 only: Use `LayerData(obj, layer = "counts")` for data access, not direct slot access
+- Use `LayerData(obj, layer = "counts")` for data access, not direct slot access
 
 ## SCTAssay Gotcha
 `SCTAssay` does NOT have a `@layers` slot — direct `@layers[["..."]]` access crashes on it.

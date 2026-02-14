@@ -338,6 +338,10 @@ viewseurat_server <- function(input, output, session) {
       summary_css,
       shiny::tags$div(class = "vs-structure-outer",
         shiny::tags$div(class = "vs-structure-title", "Seurat Object Overview"),
+        shiny::tags$div(
+          style = "font-size: 0.8em; color: #888; margin-top: -4px; margin-bottom: 8px;",
+          paste0("Seurat v", as.character(obj@version))
+        ),
         structure_diagram_ui(obj),
         shiny::tags$div(class = "vs-summary-section vs-obj-section",
           shiny::tags$div(class = "vs-summary-label", "Standard Seurat Summary"),
@@ -748,7 +752,7 @@ viewseurat_server <- function(input, output, session) {
                       choices = c("None", metadata_cols),
                       selected = "None",
                       options = list(
-                        placeholder = "Select or type gene name..."
+                        placeholder = "Select metadata column..."
                       )),
           shiny::actionButton("plot_spatial", "Plot", class = "btn-primary"),
           shiny::hr(),
@@ -758,15 +762,14 @@ viewseurat_server <- function(input, output, session) {
     )
   })
 
-  # Load gene choices in background via server-side selectize
+  # Update spatial color choices when object changes
   shiny::observeEvent(seurat_obj(), {
     obj <- seurat_obj()
     if (length(obj@images) > 0) {
-      all_choices <- c("None", colnames(obj@meta.data), rownames(obj))
+      all_choices <- c("None", colnames(obj@meta.data))
       shiny::updateSelectizeInput(session, "spatial_color_by",
         choices = all_choices,
-        selected = "None",
-        server = TRUE)
+        selected = "None")
     }
   })
 
@@ -788,7 +791,7 @@ viewseurat_server <- function(input, output, session) {
         } else {
           Seurat::SpatialPlot(obj, images = img_name)
         }
-      } else if (input$spatial_color_by %in% colnames(obj@meta.data)) {
+      } else {
         # Metadata column - check if numeric or categorical
         if (is.numeric(obj@meta.data[[input$spatial_color_by]])) {
           if (is_fov) {
@@ -802,13 +805,6 @@ viewseurat_server <- function(input, output, session) {
           } else {
             Seurat::SpatialPlot(obj, images = img_name, group.by = input$spatial_color_by)
           }
-        }
-      } else {
-        # It's a feature/gene
-        if (is_fov) {
-          Seurat::ImageFeaturePlot(obj, features = input$spatial_color_by, fov = img_name)
-        } else {
-          Seurat::SpatialFeaturePlot(obj, features = input$spatial_color_by, images = img_name)
         }
       }
     })
