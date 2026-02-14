@@ -20,10 +20,7 @@ structure_diagram_ui <- function(obj) {
   # --- CSS ---
   css <- shiny::tags$style(shiny::HTML("
     .vs-structure-outer {
-      border: 2px solid #bdbdbd;
-      border-radius: 10px;
-      background: #fafafa;
-      padding: 20px;
+      padding: 0 20px 20px 20px;
       max-width: 900px;
       font-family: 'Helvetica Neue', Arial, sans-serif;
     }
@@ -242,9 +239,32 @@ structure_diagram_ui <- function(obj) {
     )
   })
 
+  # --- Assays summary table (plain text) ---
+  slots <- c("counts", "data", "scale.data")
+  assay_rows <- lapply(assay_names, function(aname) {
+    assay_obj <- obj@assays[[aname]]
+    dims <- vapply(slots, function(s) {
+      d <- get_layer_dim(assay_obj, s)
+      paste0(d[1], "x", d[2])
+    }, character(1))
+    is_def <- if (aname == default_assay) "YES" else ""
+    hvgs <- tryCatch(
+      length(SeuratObject::VariableFeatures(assay_obj)),
+      error = function(e) 0L
+    )
+    c(is_def, dims, hvgs)
+  })
+  assays_df <- data.frame(do.call(rbind, assay_rows), row.names = assay_names)
+  colnames(assays_df) <- c("default", slots, "HVGs")
+  assays_table_text <- paste(utils::capture.output(print(assays_df)), collapse = "\n")
+
   assays_section <- shiny::tags$div(class = "vs-section vs-assays-section",
     shiny::tags$div(class = "vs-section-label", "Assays"),
-    shiny::tags$div(class = "vs-assay-cards", assay_cards)
+    shiny::tags$div(class = "vs-assay-cards", assay_cards),
+    shiny::tags$pre(
+      style = "margin: 10px 0 0 0; padding: 8px; background: transparent; border: none; font-size: 14px; color: #424242; overflow-x: auto;",
+      assays_table_text
+    )
   )
 
   # --- Idents section ---
@@ -335,21 +355,18 @@ structure_diagram_ui <- function(obj) {
     img_content
   )
 
-  # --- Assemble ---
+  # --- Assemble (returns inner content; caller wraps in outer container) ---
   shiny::tagList(
     css,
-    shiny::tags$div(class = "vs-structure-outer",
-      shiny::tags$div(class = "vs-structure-title", "Seurat Object"),
-      assays_section,
-      idents_section,
-      shiny::tags$div(class = "vs-bottom-row",
-        meta_section,
-        reductions_section
-      ),
-      shiny::tags$div(class = "vs-bottom-row",
-        images_section,
-        graphs_section
-      )
+    assays_section,
+    idents_section,
+    shiny::tags$div(class = "vs-bottom-row",
+      meta_section,
+      reductions_section
+    ),
+    shiny::tags$div(class = "vs-bottom-row",
+      images_section,
+      graphs_section
     )
   )
 }

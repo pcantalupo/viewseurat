@@ -16,7 +16,7 @@ viewseurat_ui <- function() {
     skin = "blue",
 
     shinydashboard::dashboardHeader(
-      title = "Seurat Object Viewer",
+      title = "View Seurat",
       shiny::tags$li(class = "dropdown",
               style = "padding: 15px; color: white; font-size: 16px;",
               shiny::uiOutput("file_title"))
@@ -301,24 +301,10 @@ viewseurat_server <- function(input, output, session) {
     obj <- seurat_obj()
 
     summary_css <- shiny::tags$style(shiny::HTML("
-      .vs-summary-outer {
-        border: 2px solid #bdbdbd;
-        border-radius: 10px;
-        background: #fafafa;
-        padding: 20px;
-        max-width: 900px;
-        margin-top: 20px;
-        font-family: 'Helvetica Neue', Arial, sans-serif;
-      }
-      .vs-summary-title {
-        font-size: 20px;
-        font-weight: 700;
-        margin-bottom: 14px;
-      }
       .vs-summary-section {
         border-radius: 8px;
         padding: 12px 14px;
-        margin-bottom: 14px;
+        margin-top: 14px;
       }
       .vs-summary-section:last-child {
         margin-bottom: 0;
@@ -336,11 +322,6 @@ viewseurat_server <- function(input, output, session) {
         border-radius: 6px;
         margin: 0;
       }
-      .vs-info-section {
-        background: #e0f2f1;
-        border: 1.5px solid #00897b;
-      }
-      .vs-info-section .vs-summary-label { color: #00897b; }
       .vs-obj-section {
         background: #e8eaf6;
         border: 1.5px solid #3949ab;
@@ -354,14 +335,10 @@ viewseurat_server <- function(input, output, session) {
     "))
 
     shiny::tagList(
-      structure_diagram_ui(obj),
       summary_css,
-      shiny::tags$div(class = "vs-summary-outer",
-        shiny::tags$div(class = "vs-summary-title", "Seurat Summary"),
-        shiny::tags$div(class = "vs-summary-section vs-info-section",
-          shiny::tags$div(class = "vs-summary-label", "Seurat Info"),
-          shiny::verbatimTextOutput("seurat_info_output")
-        ),
+      shiny::tags$div(class = "vs-structure-outer",
+        shiny::tags$div(class = "vs-structure-title", "Seurat Object Overview"),
+        structure_diagram_ui(obj),
         shiny::tags$div(class = "vs-summary-section vs-obj-section",
           shiny::tags$div(class = "vs-summary-label", "Standard Seurat Summary"),
           shiny::verbatimTextOutput("object_summary")
@@ -377,22 +354,6 @@ viewseurat_server <- function(input, output, session) {
   output$object_summary <- shiny::renderPrint({
     shiny::req(seurat_obj())
     print(seurat_obj())
-  })
-
-  output$seurat_info_output <- shiny::renderPrint({
-    shiny::req(seurat_obj())
-    obj <- seurat_obj()
-    info <- SeuratInfo(obj)
-
-    cat(info$version, "\n")
-    cat(info$graphs, "\n")
-    cat(info$reductions, "\n")
-    cat(info$images, "\n")
-    cat(info$ident_label, "\n")
-    cat("Idents():\n")
-    print(info$idents_table)
-    cat("\nAssays:\n")
-    print(info$assays_table)
   })
 
   output$size_info_output <- shiny::renderPrint({
