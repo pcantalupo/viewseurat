@@ -199,9 +199,25 @@ get_assay_data_safe <- function(obj, assay_name, layer,
       }
     }
 
-    # LayerData subsets at retrieval - much faster for large/on-disk data
-    SeuratObject::LayerData(assay, layer = layer,
-                            features = features, cells = cells)
+    # Old-style Assay subclasses (e.g. Signac ChromatinAssay) lack a @layers
+    # slot and their LayerData S3 method may silently ignore features/cells
+    # params, returning the full matrix -> OOM. Bypass LayerData entirely and
+    # use direct slot access + manual subsetting for these assay types.
+    use_slot_fallback <- !"layers" %in% methods::slotNames(assay) &&
+      !methods::is(assay, "Assay5")
+
+    if (use_slot_fallback) {
+      if (!layer %in% methods::slotNames(assay)) return(NULL)
+      mat <- methods::slot(assay, layer)
+      if (is.null(mat) || length(dim(mat)) < 2) return(NULL)
+      row_idx <- if (!is.null(features)) features else seq_len(nrow(mat))
+      col_idx <- if (!is.null(cells)) cells else seq_len(ncol(mat))
+      mat[row_idx, col_idx, drop = FALSE]
+    } else {
+      # LayerData subsets at retrieval - much faster for large/on-disk data
+      SeuratObject::LayerData(assay, layer = layer,
+                              features = features, cells = cells)
+    }
   }, error = function(e) {
     NULL
   })

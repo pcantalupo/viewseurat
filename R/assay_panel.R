@@ -207,8 +207,19 @@ max_preview_features <- 50
     }
   })
 
-  # Helper to convert sparse matrix to dense for display
-  to_dense <- function(mat) {
+  # Helper to convert sparse matrix to dense for display.
+  # Guard against unexpectedly large matrices (e.g. a buggy LayerData dispatch
+
+  # returning the full matrix) to prevent OOM crashes.
+  to_dense <- function(mat, max_elements = 10e6) {
+    n_elem <- as.numeric(nrow(mat)) * as.numeric(ncol(mat))
+    if (n_elem > max_elements) {
+      warning("Matrix too large to densify (", nrow(mat), "x", ncol(mat),
+              "); truncating to safe preview size")
+      row_idx <- seq_len(min(nrow(mat), 50L))
+      col_idx <- seq_len(min(ncol(mat), 20L))
+      mat <- mat[row_idx, col_idx, drop = FALSE]
+    }
     if (inherits(mat, "dgCMatrix") || inherits(mat, "sparseMatrix")) {
       as.matrix(mat)
     } else {
