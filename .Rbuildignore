@@ -7,3 +7,4 @@
 ^\.claude$
 ^local$
 ^\.github$
+^viewseurat\.code-workspace$
