@@ -27,7 +27,6 @@ Imports:
     shinycssloaders,
     shinyjs,
     waiter,
-    yaml,
     methods,
     graphics,
     stats,
