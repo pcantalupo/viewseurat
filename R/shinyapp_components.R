@@ -26,11 +26,11 @@ viewseurat_ui <- function() {
       shinydashboard::sidebarMenu(id = "sidebar",
         shinydashboard::menuItem("Upload", tabName = "upload", icon = shiny::icon("upload")),
         shinydashboard::menuItem("Overview", tabName = "structure", icon = shiny::icon("sitemap")),
-        shinydashboard::menuItem("The Guts", tabName = "guts", icon = shiny::icon("cogs")),
         shinydashboard::menuItem("Assays", tabName = "assays", icon = shiny::icon("table")),
         shinydashboard::menuItem("Metadata", tabName = "metadata", icon = shiny::icon("list")),
         shinydashboard::menuItem("Reductions", tabName = "reductions", icon = shiny::icon("project-diagram")),
-        shinydashboard::menuItem("Images", tabName = "images", icon = shiny::icon("image"))
+        shinydashboard::menuItem("Images", tabName = "images", icon = shiny::icon("image")),
+        shinydashboard::menuItem("The Guts", tabName = "guts", icon = shiny::icon("cogs"))
       )
     ),
 
@@ -39,6 +39,9 @@ viewseurat_ui <- function() {
       shinyjs::useShinyjs(),
       shiny::tags$head(
         shiny::tags$style(shiny::HTML("
+          .sidebar-menu > li > a {
+            font-size: 18px;
+          }
           .box-body { overflow-x: auto; }
           .dataTables_wrapper { overflow-x: auto; }
           .small-box { cursor: pointer; min-height: 120px; }
@@ -67,6 +70,15 @@ viewseurat_ui <- function() {
           }
           #drop_zone p {
             color: #666;
+          }
+          /* Remove colored top border from all tabs */
+          .nav-tabs-custom > .nav-tabs > li.active,
+          .nav-tabs-custom > .nav-tabs > li.active > a,
+          .nav-tabs > li.active > a,
+          .nav-tabs > li.active > a:hover,
+          .nav-tabs > li.active > a:focus,
+          .tab-content > .tab-pane.active {
+            border-top-color: #ddd !important;
           }
         ")),
         shiny::tags$script(shiny::HTML("
@@ -426,15 +438,21 @@ viewseurat_server <- function(input, output, session) {
     do.call(shinydashboard::tabBox, c(
       list(
         id = "assay_tabs",
-        width = 12,
-        title = "Assays"
+        width = 12
       ),
       lapply(assay_names, function(assay_name) {
         # Add "(default)" indicator to the default assay tab (bolded)
+        # Wrap in span with larger font size to distinguish from layer tabs
         tab_label <- if (assay_name == default_assay) {
-          shiny::tags$b(paste0(assay_name, " (default)"))
+          shiny::tags$span(
+            style = "font-size: 18px;",
+            shiny::tags$b(paste0(assay_name, " (default)"))
+          )
         } else {
-          assay_name
+          shiny::tags$span(
+            style = "font-size: 18px;",
+            assay_name
+          )
         }
         shiny::tabPanel(
           tab_label,

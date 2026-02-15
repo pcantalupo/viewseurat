@@ -52,107 +52,84 @@ assay_panel_ui <- function(assay_name, obj) {
 
   shiny::fluidRow(
     shiny::column(12,
-      shinydashboard::box(
-        title = "Assay Information",
-        status = "info",
-        solidHeader = TRUE,
-        width = 12,
-        collapsible = TRUE,
-        shiny::fluidRow(
-          shiny::column(4,
-            shiny::h4("Features (Genes):"),
-            shiny::p(shiny::strong(format(assay_info$features, big.mark = ",")))
+      shiny::tags$div(
+        class = "layer-tabs",
+        shinydashboard::tabBox(
+          id = paste0("assay_", assay_name, "_tabs"),
+          width = 12,
+          shiny::tabPanel(
+            if (assay_info$has_counts) "Counts \u2713" else "Counts",
+            shiny::fluidRow(
+              shiny::column(12,
+                if (assay_info$has_counts) {
+                  list(
+                    shiny::verbatimTextOutput(paste0(assay_name, "_counts_info")),
+                    shinycssloaders::withSpinner(DT::DTOutput(paste0(assay_name, "_counts_table")))
+                  )
+                } else {
+                  shiny::p("No counts matrix available for this assay.")
+                }
+              )
+            )
           ),
-          shiny::column(4,
-            shiny::h4("Cells:"),
-            shiny::p(shiny::strong(format(assay_info$cells, big.mark = ",")))
+          shiny::tabPanel(
+            if (assay_info$has_data) "Data \u2713" else "Data",
+            shiny::fluidRow(
+              shiny::column(12,
+                if (assay_info$has_data) {
+                  list(
+                    shiny::verbatimTextOutput(paste0(assay_name, "_data_info")),
+                    shinycssloaders::withSpinner(DT::DTOutput(paste0(assay_name, "_data_table")))
+                  )
+                } else {
+                  shiny::p("No data matrix available for this assay.")
+                }
+              )
+            )
           ),
-          shiny::column(4,
-            shiny::h4("Variable Features:"),
-            shiny::p(shiny::strong(format(assay_info$variable_features, big.mark = ",")))
-          )
-        ),
-      )
-    ),
-    shiny::column(12,
-      shinydashboard::tabBox(
-        id = paste0("assay_", assay_name, "_tabs"),
-        width = 12,
-        shiny::tabPanel(
-          if (assay_info$has_counts) "Counts \u2713" else "Counts",
-          shiny::fluidRow(
-            shiny::column(12,
-              if (assay_info$has_counts) {
-                list(
-                  shiny::h4("Counts Matrix"),
-                  shiny::verbatimTextOutput(paste0(assay_name, "_counts_info")),
-                  shinycssloaders::withSpinner(DT::DTOutput(paste0(assay_name, "_counts_table")))
-                )
-              } else {
-                shiny::p("No counts matrix available for this assay.")
-              }
+          shiny::tabPanel(
+            if (assay_info$has_scale_data) "Scale.Data \u2713" else "Scale.Data",
+            shiny::fluidRow(
+              shiny::column(12,
+                if (assay_info$has_scale_data) {
+                  list(
+                    shiny::verbatimTextOutput(paste0(assay_name, "_scale_info")),
+                    shinycssloaders::withSpinner(DT::DTOutput(paste0(assay_name, "_scale_table")))
+                  )
+                } else {
+                  shiny::p("No scale.data matrix available for this assay.")
+                }
+              )
             )
-          )
-        ),
-        shiny::tabPanel(
-          if (assay_info$has_data) "Data \u2713" else "Data",
-          shiny::fluidRow(
-            shiny::column(12,
-              if (assay_info$has_data) {
-                list(
-                  shiny::h4("Data (Normalized) Matrix"),
-                  shiny::verbatimTextOutput(paste0(assay_name, "_data_info")),
-                  shinycssloaders::withSpinner(DT::DTOutput(paste0(assay_name, "_data_table")))
-                )
-              } else {
-                shiny::p("No data matrix available for this assay.")
-              }
+          ),
+          shiny::tabPanel(
+            if (assay_info$has_variable_features) "Variable Features \u2713" else "Variable Features",
+            shiny::fluidRow(
+              shiny::column(12,
+                if (assay_info$has_variable_features) {
+                  list(
+                    shiny::verbatimTextOutput(paste0(assay_name, "_variable_features_info")),
+                    DT::DTOutput(paste0(assay_name, "_variable_features"))
+                  )
+                } else {
+                  shiny::p("No variable features for this assay.")
+                }
+              )
             )
-          )
-        ),
-        shiny::tabPanel(
-          if (assay_info$has_scale_data) "Scale.Data \u2713" else "Scale.Data",
-          shiny::fluidRow(
-            shiny::column(12,
-              if (assay_info$has_scale_data) {
-                list(
-                  shiny::h4("Scale.Data Matrix"),
-                  shiny::verbatimTextOutput(paste0(assay_name, "_scale_info")),
-                  shinycssloaders::withSpinner(DT::DTOutput(paste0(assay_name, "_scale_table")))
-                )
-              } else {
-                shiny::p("No scale.data matrix available for this assay.")
-              }
-            )
-          )
-        ),
-        shiny::tabPanel(
-          if (assay_info$has_variable_features) "Variable Features \u2713" else "Variable Features",
-          shiny::fluidRow(
-            shiny::column(12,
-              if (assay_info$has_variable_features) {
-                list(
-                  shiny::h4("Variable Features"),
-                  DT::DTOutput(paste0(assay_name, "_variable_features"))
-                )
-              } else {
-                shiny::p("No variable features for this assay.")
-              }
-            )
-          )
-        ),
-        shiny::tabPanel(
-          if (assay_info$has_feature_metadata) "Feature Metadata \u2713" else "Feature Metadata",
-          shiny::fluidRow(
-            shiny::column(12,
-              if (assay_info$has_feature_metadata) {
-                list(
-                  shiny::h4("Feature-level Metadata"),
-                  DT::DTOutput(paste0(assay_name, "_feature_meta"))
-                )
-              } else {
-                shiny::p("No feature metadata for this assay.")
-              }
+          ),
+          shiny::tabPanel(
+            if (assay_info$has_feature_metadata) "Feature Metadata \u2713" else "Feature Metadata",
+            shiny::fluidRow(
+              shiny::column(12,
+                if (assay_info$has_feature_metadata) {
+                  list(
+                    shiny::verbatimTextOutput(paste0(assay_name, "_feature_meta_info")),
+                    DT::DTOutput(paste0(assay_name, "_feature_meta"))
+                  )
+                } else {
+                  shiny::p("No feature metadata for this assay.")
+                }
+              )
             )
           )
         )
@@ -243,7 +220,7 @@ max_preview_features <- 50
       full_rows <- d[1]
       full_cols <- d[2]
 
-      cat("Matrix dimensions:", full_rows, "x", full_cols, "\n")
+      cat("Matrix dimensions:", format(full_rows, big.mark = ","), "x", format(full_cols, big.mark = ","), "\n")
     })
 
     output[[paste0(assay_name, "_counts_table")]] <- DT::renderDT({
@@ -263,7 +240,7 @@ max_preview_features <- 50
       full_rows <- d[1]
       full_cols <- d[2]
 
-      cat("Matrix dimensions:", full_rows, "x", full_cols, "\n")
+      cat("Matrix dimensions:", format(full_rows, big.mark = ","), "x", format(full_cols, big.mark = ","), "\n")
     })
 
     output[[paste0(assay_name, "_data_table")]] <- DT::renderDT({
@@ -283,7 +260,7 @@ max_preview_features <- 50
       full_rows <- d[1]
       full_cols <- d[2]
 
-      cat("Matrix dimensions:", full_rows, "x", full_cols, "\n")
+      cat("Matrix dimensions:", format(full_rows, big.mark = ","), "x", format(full_cols, big.mark = ","), "\n")
     })
 
     output[[paste0(assay_name, "_scale_table")]] <- DT::renderDT({
@@ -297,6 +274,11 @@ max_preview_features <- 50
     }, server = TRUE)
   }
 
+  output[[paste0(assay_name, "_variable_features_info")]] <- shiny::renderPrint({
+    n_var_features <- length(SeuratObject::VariableFeatures(obj@assays[[assay_name]]))
+    cat("Number of variable features:", format(n_var_features, big.mark = ","), "\n")
+  })
+
   output[[paste0(assay_name, "_variable_features")]] <- DT::renderDT({
     var_features <- get_top_variable_features(obj, assay_name, n = 100)
     if (!is.null(var_features) && length(var_features) > 0) {
@@ -306,6 +288,18 @@ max_preview_features <- 50
         options = list(pageLength = 25)
       )
     }
+  })
+
+  output[[paste0(assay_name, "_feature_meta_info")]] <- shiny::renderPrint({
+    tryCatch({
+      assay <- obj@assays[[assay_name]]
+      n_features <- nrow(assay@meta.data)
+      n_cols <- ncol(assay@meta.data)
+      cat("Feature metadata dimensions:", format(n_features, big.mark = ","), "features x",
+          format(n_cols, big.mark = ","), "columns\n")
+    }, error = function(e) {
+      cat("No feature metadata available\n")
+    })
   })
 
   output[[paste0(assay_name, "_feature_meta")]] <- DT::renderDT({
