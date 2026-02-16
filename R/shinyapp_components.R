@@ -335,15 +335,15 @@ viewseurat_server <- function(input, output, session) {
         margin: 0;
       }
       .vs-obj-section {
-        background: #e8eaf6;
-        border: 1.5px solid #3949ab;
+        background: #e8f2f8;
+        border: 1.5px solid #3c8dbc;
       }
-      .vs-obj-section .vs-summary-label { color: #3949ab; }
+      .vs-obj-section .vs-summary-label { color: #3c8dbc; }
       .vs-size-section {
-        background: #fff8e1;
-        border: 1.5px solid #f9a825;
+        background: #e8f2f8;
+        border: 1.5px solid #3c8dbc;
       }
-      .vs-size-section .vs-summary-label { color: #f9a825; }
+      .vs-size-section .vs-summary-label { color: #3c8dbc; }
     "))
 
     shiny::tagList(

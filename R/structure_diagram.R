@@ -47,10 +47,10 @@ structure_diagram_ui <- function(obj) {
       letter-spacing: 0.5px;
     }
     .vs-assays-section {
-      background: #e3f2fd;
-      border: 1.5px solid #1976d2;
+      background: #e8f2f8;
+      border: 1.5px solid #3c8dbc;
     }
-    .vs-assays-section .vs-section-label { color: #1976d2; }
+    .vs-assays-section .vs-section-label { color: #3c8dbc; }
     .vs-assay-cards {
       display: flex;
       flex-wrap: wrap;
@@ -58,7 +58,7 @@ structure_diagram_ui <- function(obj) {
     }
     .vs-assay-card {
       background: #fff;
-      border-left: 4px solid #1976d2;
+      border-left: 4px solid #3c8dbc;
       border-radius: 6px;
       padding: 10px 14px;
       min-width: 140px;
@@ -67,7 +67,7 @@ structure_diagram_ui <- function(obj) {
     .vs-assay-name {
       font-weight: 400;
       font-size: 16px;
-      color: #1565c0;
+      color: #337ab7;
     }
     .vs-assay-card.vs-default .vs-assay-name {
       font-weight: 700;        /* Add this - make default bold */
@@ -106,10 +106,10 @@ structure_diagram_ui <- function(obj) {
       margin-bottom: 0;
     }
     .vs-idents-section {
-      background: #fff8e1;
-      border: 1.5px solid #f9a825;
+      background: #e8f2f8;
+      border: 1.5px solid #3c8dbc;
     }
-    .vs-idents-section .vs-section-label { color: #f9a825; text-transform: none; }
+    .vs-idents-section .vs-section-label { color: #3c8dbc; text-transform: none; }
     .vs-ident-badges {
       display: flex;
       flex-wrap: wrap;
@@ -124,25 +124,25 @@ structure_diagram_ui <- function(obj) {
       font-size: 16px;
     }
     .vs-meta-section {
-      background: #e8f5e9;
-      border: 1.5px solid #388e3c;
+      background: #e8f2f8;
+      border: 1.5px solid #3c8dbc;
     }
-    .vs-meta-section .vs-section-label { color: #388e3c; }
+    .vs-meta-section .vs-section-label { color: #3c8dbc; }
     .vs-reductions-section {
-      background: #fff3e0;
-      border: 1.5px solid #f57c00;
+      background: #e8f2f8;
+      border: 1.5px solid #3c8dbc;
     }
-    .vs-reductions-section .vs-section-label { color: #f57c00; }
+    .vs-reductions-section .vs-section-label { color: #3c8dbc; }
     .vs-graphs-section {
-      background: #f3e5f5;
-      border: 1.5px solid #7b1fa2;
+      background: #e8f2f8;
+      border: 1.5px solid #3c8dbc;
     }
-    .vs-graphs-section .vs-section-label { color: #7b1fa2; }
+    .vs-graphs-section .vs-section-label { color: #3c8dbc; }
     .vs-images-section {
-      background: #fce4ec;
-      border: 1.5px solid #c2185b;
+      background: #e8f2f8;
+      border: 1.5px solid #3c8dbc;
     }
-    .vs-images-section .vs-section-label { color: #c2185b; }
+    .vs-images-section .vs-section-label { color: #3c8dbc; }
     .vs-item {
       font-size: 16px;
       color: #424242;
@@ -289,7 +289,7 @@ structure_diagram_ui <- function(obj) {
   }
 
   idents_section <- shiny::tags$div(class = "vs-section vs-idents-section",
-    shiny::tags$div(class = "vs-section-label", paste0("Idents (", ident_label, ")")),
+    shiny::tags$div(class = "vs-section-label", paste0("IDENTS (", ident_label, ")")),
     shiny::tags$div(class = "vs-item",
       paste0(n_levels, " levels across ", format_number(n_cells), " cells")
     ),
