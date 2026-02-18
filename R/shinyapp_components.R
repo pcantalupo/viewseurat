@@ -558,7 +558,7 @@ viewseurat_server <- function(input, output, session) {
           status = "info",
           solidHeader = TRUE,
           width = 12,
-          shinycssloaders::withSpinner(shiny::plotOutput("reduction_plot", height = "600px"))
+          shiny::plotOutput("reduction_plot", height = "600px")
         )
       ),
       shiny::column(12,
@@ -663,7 +663,7 @@ viewseurat_server <- function(input, output, session) {
         shinydashboard::box(
           id = "metadata_plot_box",
           title = "Distribution Plots",
-          status = "info",
+          status = "success",
           solidHeader = TRUE,
           width = 12,
           shiny::selectInput("metadata_column", "Select Column:",
@@ -701,12 +701,26 @@ viewseurat_server <- function(input, output, session) {
       escape = FALSE,
       rownames = FALSE,
       options = list(
-        pageLength = 50,
+        pageLength = 25,
+        lengthMenu = list(c(10, 25, 50, -1), c("10", "25", "50", "All")),
         scrollX = TRUE,
-        dom = "ftp",
+        dom = "lftip",
         columnDefs = list(
           list(width = '200px', targets = 2),
           list(width = '80px', targets = 4)
+        ),
+        preDrawCallback = DT::JS(
+          "function(settings) {",
+          "  settings._scrollPos = $(window).scrollTop();",
+          "}"
+        ),
+        drawCallback = DT::JS(
+          "function(settings) {",
+          "  if (settings._scrollPos !== undefined) {",
+          "    var pos = settings._scrollPos;",
+          "    setTimeout(function(){ $(window).scrollTop(pos); }, 50);",
+          "  }",
+          "}"
         )
       ),
       class = 'cell-border stripe'
@@ -721,21 +735,24 @@ viewseurat_server <- function(input, output, session) {
   shiny::observeEvent(input$scroll_to_table, {
     shinyjs::runjs(
       "var el = document.getElementById('metadata_table_box');
-       if(el) { el.scrollIntoView({behavior: 'smooth', block: 'start'}); }"
+       if(el) { var y = el.getBoundingClientRect().top + window.pageYOffset - 60;
+       window.scrollTo({top: y, behavior: 'smooth'}); }"
     )
   })
 
   shiny::observeEvent(input$scroll_to_summary, {
     shinyjs::runjs(
       "var el = document.getElementById('metadata_summary_box');
-       if(el) { el.scrollIntoView({behavior: 'smooth', block: 'start'}); }"
+       if(el) { var y = el.getBoundingClientRect().top + window.pageYOffset - 60;
+       window.scrollTo({top: y, behavior: 'smooth'}); }"
     )
   })
 
   shiny::observeEvent(input$scroll_to_plots, {
     shinyjs::runjs(
       "var el = document.getElementById('metadata_plot_box');
-       if(el) { el.scrollIntoView({behavior: 'smooth', block: 'start'}); }"
+       if(el) { var y = el.getBoundingClientRect().top + window.pageYOffset - 60;
+       window.scrollTo({top: y, behavior: 'smooth'}); }"
     )
   })
 
