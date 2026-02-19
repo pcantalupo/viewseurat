@@ -21,7 +21,6 @@ Imports:
     DT,
     ggplot2,
     plotly,
-    dplyr,
     Matrix,
     qs2,
     shinycssloaders,
