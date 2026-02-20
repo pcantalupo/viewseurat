@@ -13,6 +13,6 @@ format_number(x)
 A formatted string
 }
 \description{
-Format large numbers with K/M/B suffixes.
+Format large numbers with comma-separated thousands.
 }
 \keyword{internal}

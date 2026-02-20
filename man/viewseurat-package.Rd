@@ -6,7 +6,7 @@
 \alias{viewseurat-package}
 \title{viewseurat: Interactive Shiny Dashboard for Viewing Seurat Objects}
 \description{
-An interactive R Shiny dashboard for exploring Seurat v5 single-cell RNA-seq objects. Provides comprehensive graphical views of all components within a Seurat object including assays, reductions, metadata, graphs, and spatial images without performing additional analysis. Use ViewSeurat() to view objects directly from R, or run the app standalone to upload files via browser.
+An interactive R Shiny dashboard for exploring Seurat v4 and v5 single-cell RNA-seq objects. Provides comprehensive graphical views of all components within a Seurat object including assays, reductions, metadata, graphs, and spatial images without performing additional analysis. Use ViewSeurat() to view objects directly from R, or run the app standalone to upload files via browser.
 }
 \author{
 \strong{Maintainer}: Cantalupo Paul \email{pcantalupo@gmail.com}

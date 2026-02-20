@@ -22,7 +22,7 @@ get_top_variable_features <- function(obj, assay_name, n = 20) {
 
 #' Format Number
 #'
-#' Format large numbers with K/M/B suffixes.
+#' Format large numbers with comma-separated thousands.
 #'
 #' @param x A numeric value
 #' @return A formatted string
