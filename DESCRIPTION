@@ -29,7 +29,9 @@ Imports:
     methods,
     graphics,
     stats,
-    utils
+    utils,
+    xfun,
+    litedown
 Suggests:
     testthat (>= 3.0.0)
 RoxygenNote: 7.3.3

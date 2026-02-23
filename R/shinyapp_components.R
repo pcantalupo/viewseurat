@@ -154,7 +154,18 @@ viewseurat_ui <- function() {
               }
             }
           });
-        "))
+        ")),
+        shiny::tags$link(
+          rel = "stylesheet",
+          href = "https://cdn.jsdelivr.net/npm/@xiee/utils@1.14.24/css/tabsets.min.css"
+        ),
+        shiny::tags$link(
+          rel = "stylesheet",
+          href = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css"
+        ),
+        shiny::tags$script(
+          src = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"
+        )
       ),
 
       shinydashboard::tabItems(
@@ -900,7 +911,7 @@ viewseurat_server <- function(input, output, session) {
           solidHeader = TRUE,
           width = 12,
           collapsible = TRUE,
-          shiny::verbatimTextOutput("guts_output")
+          shiny::uiOutput("guts_output")
         )
       )
     )
@@ -938,13 +949,29 @@ viewseurat_server <- function(input, output, session) {
     }
   })
 
-  output$guts_output <- shiny::renderPrint({
+  output$guts_output <- shiny::renderUI({
     shiny::req(seurat_obj(), selected_slot())
     obj <- seurat_obj()
     slot_name <- selected_slot()
+    slot_obj <- methods::slot(obj, slot_name)
 
-    cat(paste0("str(seurat@", slot_name, "):\n\n"))
-    str(methods::slot(obj, slot_name))
+    if (is.list(slot_obj) && length(slot_obj) > 0 &&
+        !slot_name %in% c("meta.data", "version")) {
+      md <- xfun::tabset(slot_obj, value = str)
+      html <- litedown::mark(text = md)
+      shiny::tagList(
+        shiny::HTML(paste(html, collapse = "\n")),
+        shiny::tags$script(shiny::HTML(
+          "$.getScript('https://cdn.jsdelivr.net/npm/@xiee/utils@1.14.24/js/tabsets.min.js', function() { hljs.highlightAll(); });"
+        ))
+      )
+    } else {
+      txt <- utils::capture.output({
+        cat(paste0("str(seurat@", slot_name, "):\n\n"))
+        str(slot_obj)
+      })
+      shiny::tags$pre(paste(txt, collapse = "\n"))
+    }
   })
 }
 
