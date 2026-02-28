@@ -48,12 +48,12 @@ validate_seurat_object <- function(obj) {
 
   errors <- c()
 
-  if (ncol(obj) == 0) {
-    errors <- c(errors, "Object contains no cells")
-  }
-
+  # Must check assays first: ncol() dispatches through [[DefaultAssay()]] which
+  # throws a cryptic error when @assays is empty.
   if (length(obj@assays) == 0) {
     errors <- c(errors, "Object contains no assays")
+  } else if (ncol(obj) == 0) {
+    errors <- c(errors, "Object contains no cells")
   }
 
   if (length(errors) > 0) {
@@ -85,6 +85,7 @@ get_assay_data_safe <- function(obj, assay_name, layer,
                                 cells_filter = NULL) {
   tryCatch({
     assay <- obj@assays[[assay_name]]
+    if (is.null(assay)) return(NULL)
 
     # Determine subsetting indices
     features <- NULL
@@ -121,6 +122,9 @@ get_assay_data_safe <- function(obj, assay_name, layer,
       col_idx <- if (!is.null(cells)) cells else seq_len(ncol(mat))
       mat[row_idx, col_idx, drop = FALSE]
     } else {
+      # LayerData returns an empty matrix (not NULL/error) for missing layers.
+      # Guard explicitly so callers get a clean NULL.
+      if (!layer %in% SeuratObject::Layers(assay)) return(NULL)
       # LayerData subsets at retrieval - much faster for large/on-disk data
       SeuratObject::LayerData(assay, layer = layer,
                               features = features, cells = cells)
@@ -164,12 +168,12 @@ FindIdentLabel <- function(seurat) {
 #' @keywords internal
 #' @export
 get_layer_dim <- function(assay_obj, layer) {
-  slotnames <- slotNames(assay_obj)
+  slotnames <- methods::slotNames(assay_obj)
   mat <- NULL
   if ("layers" %in% slotnames) {
     mat <- assay_obj@layers[[layer]]
   } else if (layer %in% slotnames) {
-    mat <- slot(assay_obj, layer)
+    mat <- methods::slot(assay_obj, layer)
   }
 
   if (is.null(mat)) return(c(0L, 0L))

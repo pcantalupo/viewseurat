@@ -6,6 +6,9 @@
 #' @keywords internal
 NULL
 
+# Maximum upload size: 10 GB
+VIEWSEURAT_MAX_REQUEST_SIZE <- 10240 * 1024^2
+
 #' Create the ViewSeurat UI
 #'
 #' @return A Shiny UI object
@@ -983,8 +986,8 @@ viewseurat_server <- function(input, output, session) {
 #' @return A Shiny app object
 #' @keywords internal
 viewseurat_app <- function() {
-  # Set max upload size (10 GB)
-  options(shiny.maxRequestSize = 10240 * 1024^2)
+  # Set max upload size
+  options(shiny.maxRequestSize = VIEWSEURAT_MAX_REQUEST_SIZE)
 
   shiny::shinyApp(ui = viewseurat_ui(), server = viewseurat_server)
 }
