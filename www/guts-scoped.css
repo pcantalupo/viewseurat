@@ -1,0 +1,34 @@
+/* Scoped styles for the Guts tab only.
+   All selectors are prefixed with .guts-tabset to prevent leaking
+   into Bootstrap/AdminLTE shared components on other pages. */
+
+/* tabsets — @xiee/utils@1.14.24/css/tabsets.min.css */
+.guts-tabset .tabset{margin-top:1em;margin-bottom:1em}
+.guts-tabset .tabset *{margin:.5em auto}
+.guts-tabset .tab-link,.guts-tabset .tab-pane{border:1px solid #0000000d;border-radius:5px 5px 0 0;padding:.2em .5em}
+.guts-tabset .tab-link.active,.guts-tabset .tab-pane.active{border-color:#00000080}
+.guts-tabset .tab-link{cursor:pointer;margin:0 .5em -1px 0;display:inline-block}
+.guts-tabset .tab-link.active{border-bottom-color:#fff}
+.guts-tabset .tab-link+.tab-pane.active{border-radius:0 5px 0 0}
+.guts-tabset .tab-link:not(.active):hover{background:#0000000d}
+.guts-tabset .tab-pane{display:none}
+.guts-tabset .tab-pane.active{display:block}
+
+/* highlight.js GitHub theme — highlight.js@11.9.0/styles/github.min.css */
+.guts-tabset pre code.hljs{display:block;overflow-x:auto;padding:1em}
+.guts-tabset code.hljs{padding:3px 5px}
+.guts-tabset .hljs{color:#24292e;background:#fff}
+.guts-tabset .hljs-doctag,.guts-tabset .hljs-keyword,.guts-tabset .hljs-meta .hljs-keyword,.guts-tabset .hljs-template-tag,.guts-tabset .hljs-template-variable,.guts-tabset .hljs-type,.guts-tabset .hljs-variable.language_{color:#d73a49}
+.guts-tabset .hljs-title,.guts-tabset .hljs-title.class_,.guts-tabset .hljs-title.class_.inherited__,.guts-tabset .hljs-title.function_{color:#6f42c1}
+.guts-tabset .hljs-attr,.guts-tabset .hljs-attribute,.guts-tabset .hljs-literal,.guts-tabset .hljs-meta,.guts-tabset .hljs-number,.guts-tabset .hljs-operator,.guts-tabset .hljs-selector-attr,.guts-tabset .hljs-selector-class,.guts-tabset .hljs-selector-id,.guts-tabset .hljs-variable{color:#005cc5}
+.guts-tabset .hljs-meta .hljs-string,.guts-tabset .hljs-regexp,.guts-tabset .hljs-string{color:#032f62}
+.guts-tabset .hljs-built_in,.guts-tabset .hljs-symbol{color:#e36209}
+.guts-tabset .hljs-code,.guts-tabset .hljs-comment,.guts-tabset .hljs-formula{color:#6a737d}
+.guts-tabset .hljs-name,.guts-tabset .hljs-quote,.guts-tabset .hljs-selector-pseudo,.guts-tabset .hljs-selector-tag{color:#22863a}
+.guts-tabset .hljs-subst{color:#24292e}
+.guts-tabset .hljs-section{color:#005cc5;font-weight:700}
+.guts-tabset .hljs-bullet{color:#735c0f}
+.guts-tabset .hljs-emphasis{color:#24292e;font-style:italic}
+.guts-tabset .hljs-strong{color:#24292e;font-weight:700}
+.guts-tabset .hljs-addition{color:#22863a;background-color:#f0fff4}
+.guts-tabset .hljs-deletion{color:#b31d28;background-color:#ffeef0}

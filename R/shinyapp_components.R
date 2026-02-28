@@ -157,18 +157,7 @@ viewseurat_ui <- function() {
               }
             }
           });
-        ")),
-        shiny::tags$link(
-          rel = "stylesheet",
-          href = "https://cdn.jsdelivr.net/npm/@xiee/utils@1.14.24/css/tabsets.min.css"
-        ),
-        shiny::tags$link(
-          rel = "stylesheet",
-          href = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css"
-        ),
-        shiny::tags$script(
-          src = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"
-        )
+        "))
       ),
 
       shinydashboard::tabItems(
@@ -958,14 +947,32 @@ viewseurat_server <- function(input, output, session) {
     slot_name <- selected_slot()
     slot_obj <- methods::slot(obj, slot_name)
 
+    guts_dep <- htmltools::htmlDependency(
+      name = "guts-tabset-styles",
+      version = "1.0",
+      src = normalizePath("www"),
+      stylesheet = "guts-scoped.css",
+      all_files = FALSE
+    )
+
     if (is.list(slot_obj) && length(slot_obj) > 0 &&
         !slot_name %in% c("meta.data", "version")) {
       md <- xfun::tabset(slot_obj, value = str)
       html <- litedown::mark(text = md)
       shiny::tagList(
-        shiny::HTML(paste(html, collapse = "\n")),
+        guts_dep,
+        shiny::div(
+          class = "guts-tabset",
+          shiny::HTML(paste(html, collapse = "\n"))
+        ),
         shiny::tags$script(shiny::HTML(
-          "$.getScript('https://cdn.jsdelivr.net/npm/@xiee/utils@1.14.24/js/tabsets.min.js', function() { hljs.highlightAll(); });"
+          "if (typeof hljs === 'undefined') {
+            $.getScript('https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js', function() {
+              $.getScript('https://cdn.jsdelivr.net/npm/@xiee/utils@1.14.24/js/tabsets.min.js', function() { hljs.highlightAll(); });
+            });
+          } else {
+            $.getScript('https://cdn.jsdelivr.net/npm/@xiee/utils@1.14.24/js/tabsets.min.js', function() { hljs.highlightAll(); });
+          }"
         ))
       )
     } else {
