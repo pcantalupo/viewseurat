@@ -7,3 +7,6 @@
 *.code-workspace
 docs/
 local/
+
+/.quarto/
+**/*.quarto_ipynb

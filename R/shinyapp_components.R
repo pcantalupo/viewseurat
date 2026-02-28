@@ -659,6 +659,11 @@ viewseurat_server <- function(input, output, session) {
           status = "primary",
           solidHeader = TRUE,
           width = 12,
+          shiny::textInput(
+            "metadata_col_search",
+            label = "Search columns:",
+            placeholder = "Enter column name (partial match, case-insensitive)"
+          ),
           shinycssloaders::withSpinner(DT::DTOutput("metadata_table"))
         )
       ),
@@ -681,8 +686,10 @@ viewseurat_server <- function(input, output, session) {
     shiny::req(seurat_obj())
     obj <- seurat_obj()
 
+    display_data <- filter_metadata_columns(obj@meta.data, input$metadata_col_search)
+
     DT::datatable(
-      obj@meta.data,
+      display_data,
       options = list(
         pageLength = 10,
         scrollX = TRUE,
