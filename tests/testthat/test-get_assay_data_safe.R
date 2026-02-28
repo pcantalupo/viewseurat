@@ -66,8 +66,16 @@ test_that("get_assay_data_safe does not subset when dims are within limits", {
 test_that("get_assay_data_safe slot-fallback returns matrix for present slot", {
   skip_if_not_installed("SeuratObject")
 
-  obj              <- SeuratObject::CreateSeuratObject(counts = make_counts_matrix())
-  obj@assays[["mock_v4"]] <- make_mock_v4_assay(nrow = 2L, ncol = 3L)
+  obj <- SeuratObject::CreateSeuratObject(counts = make_counts_matrix())
+
+  # Inject a mock v4-style assay directly into the assays list.
+  # Direct @-slot replacement is safe here: SeuratObject types @assays as a
+  # plain list, so arbitrary values can be stored.  If a future SeuratObject
+  # version rejects non-Assay values we skip rather than hard-fail.
+  tryCatch(
+    obj@assays[["mock_v4"]] <- make_mock_v4_assay(nrow = 2L, ncol = 3L),
+    error = function(e) skip(paste("@assays assignment rejected:", conditionMessage(e)))
+  )
 
   result <- get_assay_data_safe(obj, "mock_v4", "counts")
   expect_equal(dim(result), c(2L, 3L))
@@ -76,8 +84,12 @@ test_that("get_assay_data_safe slot-fallback returns matrix for present slot", {
 test_that("get_assay_data_safe slot-fallback returns NULL for absent slot", {
   skip_if_not_installed("SeuratObject")
 
-  obj              <- SeuratObject::CreateSeuratObject(counts = make_counts_matrix())
-  obj@assays[["mock_v4"]] <- make_mock_v4_assay()
+  obj <- SeuratObject::CreateSeuratObject(counts = make_counts_matrix())
+
+  tryCatch(
+    obj@assays[["mock_v4"]] <- make_mock_v4_assay(),
+    error = function(e) skip(paste("@assays assignment rejected:", conditionMessage(e)))
+  )
 
   # MockV4LikeAssay has no 'scale.data' slot
   expect_null(get_assay_data_safe(obj, "mock_v4", "scale.data"))

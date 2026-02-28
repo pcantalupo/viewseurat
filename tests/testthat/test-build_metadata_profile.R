@@ -157,3 +157,14 @@ test_that("build_metadata_profile escapes HTML special chars in level names", {
   expect_false(grepl("<script>", result$Distribution, fixed = TRUE))
   expect_true(grepl("&lt;script&gt;", result$Distribution, fixed = TRUE))
 })
+
+test_that("build_metadata_profile escapes HTML special chars in factor level names", {
+  meta <- data.frame(
+    grp = factor(c("<b>bold</b>", "<b>bold</b>", "normal")),
+    stringsAsFactors = FALSE
+  )
+  result <- build_metadata_profile(meta)
+
+  expect_false(grepl("<b>", result$Distribution, fixed = TRUE))
+  expect_true(grepl("&lt;b&gt;", result$Distribution, fixed = TRUE))
+})

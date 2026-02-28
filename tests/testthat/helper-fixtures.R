@@ -7,8 +7,9 @@
 #                             (no 'layers' slot, direct 'counts'/'data' slots)
 
 #' Build a minimal counts matrix suitable for CreateSeuratObject()
+#' Returns a sparse dgCMatrix to avoid SeuratObject v5 coercion warnings.
 make_counts_matrix <- function(nrow = 2L, ncol = 3L) {
-  matrix(
+  mat <- matrix(
     seq_len(nrow * ncol),
     nrow  = nrow,
     dimnames = list(
@@ -16,6 +17,7 @@ make_counts_matrix <- function(nrow = 2L, ncol = 3L) {
       paste0("cell", seq_len(ncol))
     )
   )
+  Matrix::Matrix(mat, sparse = TRUE)
 }
 
 # Minimal S4 class that mimics a v4-style Assay:
@@ -31,7 +33,16 @@ if (!isClass("MockV4LikeAssay")) {
 }
 
 #' Create a MockV4LikeAssay instance
+#' Uses a plain dense matrix (not the sparse fixture) because MockV4LikeAssay
+#' slots are typed as "matrix" to mirror actual v4 Assay slot types.
 make_mock_v4_assay <- function(nrow = 2L, ncol = 3L) {
-  mat <- make_counts_matrix(nrow = nrow, ncol = ncol)
+  mat <- matrix(
+    seq_len(nrow * ncol),
+    nrow = nrow,
+    dimnames = list(
+      paste0("gene", seq_len(nrow)),
+      paste0("cell", seq_len(ncol))
+    )
+  )
   methods::new("MockV4LikeAssay", counts = mat, data = mat)
 }
