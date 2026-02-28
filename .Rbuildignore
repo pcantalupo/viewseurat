@@ -1,3 +1,5 @@
+^renv$
+^renv\.lock$
 ^LICENSE\.md$
 ^.*\.Rproj$
 ^\.Rproj\.user$
@@ -8,3 +10,4 @@
 ^local$
 ^\.github$
 ^viewseurat\.code-workspace$
+^dev$

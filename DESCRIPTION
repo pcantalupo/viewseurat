@@ -1,37 +1,40 @@
-Package: viewseurat
 Type: Package
+Package: viewseurat
 Title: Interactive Shiny Dashboard for Viewing Seurat Objects
 Version: 0.2.0
-Authors@R: person("Cantalupo", "Paul", email = "pcantalupo@gmail.com", role = c("aut", "cre"))
-Description: An interactive R Shiny dashboard for exploring Seurat v4 and v5 single-cell
-    RNA-seq objects. Provides comprehensive graphical views of all components within
-    a Seurat object including assays, reductions, metadata, graphs, and spatial images
-    without performing additional analysis. Use ViewSeurat() to view objects directly
-    from R, or run the app standalone to upload files via browser.
+Authors@R: 
+    person("Cantalupo", "Paul", , "pcantalupo@gmail.com", role = c("aut", "cre"))
+Description: An interactive R Shiny dashboard for exploring Seurat v4 and
+    v5 single-cell RNA-seq objects. Provides comprehensive graphical views
+    of all components within a Seurat object including assays, reductions,
+    metadata, graphs, and spatial images without performing additional
+    analysis. Use ViewSeurat() to view objects directly from R, or run the
+    app standalone to upload files via browser.
 License: MIT + file LICENSE
-Encoding: UTF-8
-LazyData: true
 Depends:
     R (>= 4.0.0)
 Imports:
-    shiny (>= 1.7.0),
-    shinydashboard,
-    Seurat (>= 5.0.0),
-    SeuratObject,
     DT,
     ggplot2,
-    plotly,
-    Matrix,
-    qs2,
-    shinycssloaders,
-    shinyjs,
-    waiter,
-    methods,
     graphics,
+    htmltools,
+    litedown,
+    methods,
+    qs2,
+    Seurat (>= 5.0.0),
+    SeuratObject,
+    shiny (>= 1.7.0),
+    shinycssloaders,
+    shinydashboard,
+    shinyjs,
     stats,
+    tools,
     utils,
-    xfun,
-    litedown
+    waiter,
+    xfun
 Suggests:
+    Matrix,
     testthat (>= 3.0.0)
+Encoding: UTF-8
+LazyData: true
 RoxygenNote: 7.3.3
