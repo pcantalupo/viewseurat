@@ -9,7 +9,8 @@ get_assay_data_safe(
   assay_name,
   layer,
   max_features = NULL,
-  max_cells = NULL
+  max_cells = NULL,
+  cells_filter = NULL
 )
 }
 \arguments{
@@ -22,6 +23,9 @@ get_assay_data_safe(
 \item{max_features}{Maximum features to retrieve (NULL for all)}
 
 \item{max_cells}{Maximum cells to retrieve (NULL for all)}
+
+\item{cells_filter}{Integer vector of cell indices to retrieve; overrides
+max_cells when provided.}
 }
 \value{
 Matrix data or NULL if not available

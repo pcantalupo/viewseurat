@@ -4,7 +4,7 @@
 \alias{assay_panel_server}
 \title{Assay Panel Server}
 \usage{
-assay_panel_server(assay_name, obj, output)
+assay_panel_server(assay_name, obj, output, input)
 }
 \arguments{
 \item{assay_name}{Name of the assay}
@@ -12,6 +12,8 @@ assay_panel_server(assay_name, obj, output)
 \item{obj}{A Seurat object}
 
 \item{output}{Shiny output object}
+
+\item{input}{Shiny input object}
 }
 \value{
 NULL (called for side effects)

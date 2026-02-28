@@ -94,3 +94,54 @@ test_that("get_assay_data_safe slot-fallback returns NULL for absent slot", {
   # MockV4LikeAssay has no 'scale.data' slot
   expect_null(get_assay_data_safe(obj, "mock_v4", "scale.data"))
 })
+
+# -- cells_filter parameter ---------------------------------------------------
+# cells_filter is an integer vector of column indices; it overrides max_cells
+# and is used by the cell-barcode search feature in assay_panel_server.
+
+test_that("get_assay_data_safe cells_filter selects specific columns", {
+  skip_if_not_installed("SeuratObject")
+
+  obj    <- SeuratObject::CreateSeuratObject(counts = make_counts_matrix(3L, 5L))
+  result <- get_assay_data_safe(obj, "RNA", "counts", cells_filter = c(1L, 3L, 5L))
+
+  expect_equal(ncol(result), 3L)
+  expect_equal(nrow(result), 3L)
+})
+
+test_that("get_assay_data_safe cells_filter takes precedence over max_cells", {
+  skip_if_not_installed("SeuratObject")
+
+  obj    <- SeuratObject::CreateSeuratObject(counts = make_counts_matrix(3L, 6L))
+  result <- get_assay_data_safe(obj, "RNA", "counts",
+                                max_cells = 2L, cells_filter = c(1L, 3L, 5L))
+
+  expect_equal(ncol(result), 3L)
+})
+
+test_that("get_assay_data_safe cells_filter can be combined with max_features", {
+  skip_if_not_installed("SeuratObject")
+
+  obj    <- SeuratObject::CreateSeuratObject(counts = make_counts_matrix(5L, 6L))
+  result <- get_assay_data_safe(obj, "RNA", "counts",
+                                max_features = 2L, cells_filter = c(1L, 4L, 6L))
+
+  expect_equal(nrow(result), 2L)
+  expect_equal(ncol(result), 3L)
+})
+
+
+test_that("get_assay_data_safe slot-fallback respects cells_filter", {
+  skip_if_not_installed("SeuratObject")
+
+  obj <- SeuratObject::CreateSeuratObject(counts = make_counts_matrix())
+
+  tryCatch(
+    obj@assays[["mock_v4"]] <- make_mock_v4_assay(nrow = 2L, ncol = 4L),
+    error = function(e) skip(paste("@assays assignment rejected:", conditionMessage(e)))
+  )
+
+  result <- get_assay_data_safe(obj, "mock_v4", "counts", cells_filter = c(1L, 3L))
+  expect_equal(ncol(result), 2L)
+  expect_equal(nrow(result), 2L)
+})

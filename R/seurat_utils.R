@@ -74,12 +74,15 @@ validate_seurat_object <- function(obj) {
 #' @param layer Name of the layer (counts, data, scale.data)
 #' @param max_features Maximum features to retrieve (NULL for all)
 #' @param max_cells Maximum cells to retrieve (NULL for all)
+#' @param cells_filter Integer vector of cell indices to retrieve; overrides
+#'   max_cells when provided.
 #' @return Matrix data or NULL if not available
 #' @keywords internal
 #' @export
 #' @importFrom SeuratObject LayerData
 get_assay_data_safe <- function(obj, assay_name, layer,
-                                max_features = NULL, max_cells = NULL) {
+                                max_features = NULL, max_cells = NULL,
+                                cells_filter = NULL) {
   tryCatch({
     assay <- obj@assays[[assay_name]]
     if (is.null(assay)) return(NULL)
@@ -95,7 +98,9 @@ get_assay_data_safe <- function(obj, assay_name, layer,
       }
     }
 
-    if (!is.null(max_cells)) {
+    if (!is.null(cells_filter)) {
+      cells <- cells_filter
+    } else if (!is.null(max_cells)) {
       n_cells <- ncol(assay)
       if (max_cells < n_cells) {
         cells <- 1:max_cells
