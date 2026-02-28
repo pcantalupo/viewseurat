@@ -29,8 +29,8 @@ source("R/assay_panel.R")
 source("R/structure_diagram.R")
 source("R/shinyapp_components.R")
 
-# Set max upload size (10 GB)
-options(shiny.maxRequestSize = 10240 * 1024^2)
+# Set max upload size
+options(shiny.maxRequestSize = VIEWSEURAT_MAX_REQUEST_SIZE)
 
 # Create and return the app (explicit shinyApp call for RStudio detection)
 shinyApp(ui = viewseurat_ui(), server = viewseurat_server)
