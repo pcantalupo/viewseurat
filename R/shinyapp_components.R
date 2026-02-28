@@ -488,7 +488,7 @@ viewseurat_server <- function(input, output, session) {
         assay_panel_ui(assay_name, obj)
       })
       # Set up the server logic
-      assay_panel_server(assay_name, obj, output)
+      assay_panel_server(assay_name, obj, output, input)
       initialized_assays(c(initialized_assays(), assay_name))
     }
   }

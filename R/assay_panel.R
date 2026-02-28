@@ -64,6 +64,11 @@ assay_panel_ui <- function(assay_name, obj) {
                 if (assay_info$has_counts) {
                   list(
                     shiny::verbatimTextOutput(paste0(assay_name, "_counts_info")),
+                    shiny::textInput(
+                      paste0(assay_name, "_counts_cell_search"),
+                      label = "Search cells:",
+                      placeholder = "Enter barcode (partial match, case-insensitive)"
+                    ),
                     shinycssloaders::withSpinner(DT::DTOutput(paste0(assay_name, "_counts_table")))
                   )
                 } else {
@@ -79,6 +84,11 @@ assay_panel_ui <- function(assay_name, obj) {
                 if (assay_info$has_data) {
                   list(
                     shiny::verbatimTextOutput(paste0(assay_name, "_data_info")),
+                    shiny::textInput(
+                      paste0(assay_name, "_data_cell_search"),
+                      label = "Search cells:",
+                      placeholder = "Enter barcode (partial match, case-insensitive)"
+                    ),
                     shinycssloaders::withSpinner(DT::DTOutput(paste0(assay_name, "_data_table")))
                   )
                 } else {
@@ -94,6 +104,11 @@ assay_panel_ui <- function(assay_name, obj) {
                 if (assay_info$has_scale_data) {
                   list(
                     shiny::verbatimTextOutput(paste0(assay_name, "_scale_info")),
+                    shiny::textInput(
+                      paste0(assay_name, "_scale_cell_search"),
+                      label = "Search cells:",
+                      placeholder = "Enter barcode (partial match, case-insensitive)"
+                    ),
                     shinycssloaders::withSpinner(DT::DTOutput(paste0(assay_name, "_scale_table")))
                   )
                 } else {
@@ -145,43 +160,60 @@ assay_panel_ui <- function(assay_name, obj) {
 #' @param assay_name Name of the assay
 #' @param obj A Seurat object
 #' @param output Shiny output object
+#' @param input Shiny input object
 #' @return NULL (called for side effects)
 #' @keywords internal
 #' @export
-assay_panel_server <- function(assay_name, obj, output) {
+assay_panel_server <- function(assay_name, obj, output, input) {
   assay_info <- get_assay_info(obj, assay_name)
 
-
   # Constants for preview limits
-
-max_preview_features <- 50
+  max_preview_features <- 50
   max_preview_cells <- 20
 
-  # Cache layer data with reactive() - fetch once with subsetting, reuse for info + table
-  # LayerData() with features/cells params subsets at retrieval time,
- # which is much faster than loading the full matrix then subsetting
+  # Helper: resolve cell search term to integer indices, or NULL for default behaviour.
+  # Returns integer(0) when a non-empty search matches no cells.
+  get_cell_filter <- function(search_input_id) {
+    raw <- input[[search_input_id]]
+    search_term <- trimws(if (is.null(raw)) "" else raw)
+    if (nchar(search_term) == 0) return(NULL)
+    all_cells <- colnames(obj@assays[[assay_name]])
+    matched <- grep(search_term, all_cells, fixed = TRUE, ignore.case = TRUE)
+    head(matched, max_preview_cells)
+  }
+
+  # Cache layer data with reactive() - fetch once with subsetting, reuse for info + table.
+  # When a cell search is active, cell indices come from get_cell_filter(); otherwise
+  # the first max_preview_cells cells are shown (default behaviour).
+  # Returns NULL when the layer is absent OR when the search matches no cells.
   counts_data <- shiny::reactive({
-    if (assay_info$has_counts) {
-      get_assay_data_safe(obj, assay_name, "counts",
-                          max_features = max_preview_features,
-                          max_cells = max_preview_cells)
-    }
+    if (!assay_info$has_counts) return(NULL)
+    cell_filter <- get_cell_filter(paste0(assay_name, "_counts_cell_search"))
+    if (!is.null(cell_filter) && length(cell_filter) == 0) return(NULL)
+    get_assay_data_safe(obj, assay_name, "counts",
+                        max_features = max_preview_features,
+                        max_cells = if (is.null(cell_filter)) max_preview_cells else NULL,
+                        cells_filter = cell_filter)
   })
 
   data_data <- shiny::reactive({
-    if (assay_info$has_data) {
-      get_assay_data_safe(obj, assay_name, "data",
-                          max_features = max_preview_features,
-                          max_cells = max_preview_cells)
-    }
+    if (!assay_info$has_data) return(NULL)
+    cell_filter <- get_cell_filter(paste0(assay_name, "_data_cell_search"))
+    if (!is.null(cell_filter) && length(cell_filter) == 0) return(NULL)
+    get_assay_data_safe(obj, assay_name, "data",
+                        max_features = max_preview_features,
+                        max_cells = if (is.null(cell_filter)) max_preview_cells else NULL,
+                        cells_filter = cell_filter)
   })
 
   scale_data <- shiny::reactive({
-    if (assay_info$has_scale_data) {
-      get_assay_data_safe(obj, assay_name, "scale.data",
-                          max_features = max_preview_features,
-                          max_cells = max_preview_cells)
-    }
+    if (!assay_info$has_scale_data) return(NULL)
+    cell_filter <- get_cell_filter(paste0(assay_name, "_scale_cell_search"))
+    if (!is.null(cell_filter) && length(cell_filter) == 0) return(NULL)
+    get_assay_data_safe(obj, assay_name, "scale.data",
+                        max_features = max_preview_features,
+                        max_cells = if (is.null(cell_filter)) max_preview_cells else NULL,
+                        cells_filter = cell_filter)
   })
 
   # Helper to convert sparse matrix to dense for display.
@@ -225,7 +257,13 @@ max_preview_features <- 50
 
     output[[paste0(assay_name, "_counts_table")]] <- DT::renderDT({
       mat <- counts_data()
-      if (!is.null(mat)) {
+      if (is.null(mat)) {
+        DT::datatable(
+          data.frame(Note = "No cells matching the search term"),
+          options = list(dom = "t"),
+          rownames = FALSE
+        )
+      } else {
         DT::datatable(
           as.data.frame(to_dense(mat)),
           options = dt_options()
@@ -245,7 +283,13 @@ max_preview_features <- 50
 
     output[[paste0(assay_name, "_data_table")]] <- DT::renderDT({
       mat <- data_data()
-      if (!is.null(mat)) {
+      if (is.null(mat)) {
+        DT::datatable(
+          data.frame(Note = "No cells matching the search term"),
+          options = list(dom = "t"),
+          rownames = FALSE
+        )
+      } else {
         DT::datatable(
           as.data.frame(to_dense(mat)),
           options = dt_options()
@@ -265,7 +309,13 @@ max_preview_features <- 50
 
     output[[paste0(assay_name, "_scale_table")]] <- DT::renderDT({
       mat <- scale_data()
-      if (!is.null(mat)) {
+      if (is.null(mat)) {
+        DT::datatable(
+          data.frame(Note = "No cells matching the search term"),
+          options = list(dom = "t"),
+          rownames = FALSE
+        )
+      } else {
         DT::datatable(
           as.data.frame(to_dense(mat)),
           options = dt_options()
