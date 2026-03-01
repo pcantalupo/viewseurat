@@ -145,3 +145,53 @@ test_that("get_assay_data_safe slot-fallback respects cells_filter", {
   expect_equal(ncol(result), 2L)
   expect_equal(nrow(result), 2L)
 })
+
+# -- features_filter parameter ------------------------------------------------
+# features_filter is an integer vector of row indices; it overrides max_features
+# and is used by the gene search feature in assay_panel_server.
+
+test_that("get_assay_data_safe features_filter selects specific rows", {
+  skip_if_not_installed("SeuratObject")
+
+  obj    <- SeuratObject::CreateSeuratObject(counts = make_counts_matrix(5L, 4L))
+  result <- get_assay_data_safe(obj, "RNA", "counts", features_filter = c(1L, 3L, 5L))
+
+  expect_equal(nrow(result), 3L)
+  expect_equal(ncol(result), 4L)
+})
+
+test_that("get_assay_data_safe features_filter takes precedence over max_features", {
+  skip_if_not_installed("SeuratObject")
+
+  obj    <- SeuratObject::CreateSeuratObject(counts = make_counts_matrix(5L, 4L))
+  result <- get_assay_data_safe(obj, "RNA", "counts",
+                                max_features = 2L, features_filter = c(1L, 3L, 5L))
+
+  expect_equal(nrow(result), 3L)
+})
+
+test_that("get_assay_data_safe features_filter can be combined with cells_filter", {
+  skip_if_not_installed("SeuratObject")
+
+  obj    <- SeuratObject::CreateSeuratObject(counts = make_counts_matrix(5L, 6L))
+  result <- get_assay_data_safe(obj, "RNA", "counts",
+                                features_filter = c(2L, 4L), cells_filter = c(1L, 3L, 5L))
+
+  expect_equal(nrow(result), 2L)
+  expect_equal(ncol(result), 3L)
+})
+
+test_that("get_assay_data_safe slot-fallback respects features_filter", {
+  skip_if_not_installed("SeuratObject")
+
+  obj <- SeuratObject::CreateSeuratObject(counts = make_counts_matrix())
+
+  tryCatch(
+    obj@assays[["mock_v4"]] <- make_mock_v4_assay(nrow = 4L, ncol = 3L),
+    error = function(e) skip(paste("@assays assignment rejected:", conditionMessage(e)))
+  )
+
+  result <- get_assay_data_safe(obj, "mock_v4", "counts", features_filter = c(1L, 3L))
+  expect_equal(nrow(result), 2L)
+  expect_equal(ncol(result), 3L)
+})
