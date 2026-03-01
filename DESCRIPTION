@@ -1,7 +1,7 @@
 Type: Package
 Package: viewseurat
 Title: Interactive Shiny Dashboard for Viewing Seurat Objects
-Version: 0.2.0
+Version: 0.3.0
 Authors@R: 
     person("Cantalupo", "Paul", , "pcantalupo@gmail.com", role = c("aut", "cre"))
 Description: An interactive R Shiny dashboard for exploring Seurat v4 and
