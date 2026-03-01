@@ -62,8 +62,14 @@ assay_panel_ui <- function(assay_name, obj) {
             shiny::fluidRow(
               shiny::column(12,
                 if (assay_info$has_counts) {
+                  # Search boxes stacked: genes (rows) on top, cells (columns) below
                   list(
                     shiny::verbatimTextOutput(paste0(assay_name, "_counts_info")),
+                    shiny::textInput(
+                      paste0(assay_name, "_counts_gene_search"),
+                      label = "Search genes:",
+                      placeholder = "Enter gene name (partial match, case-insensitive)"
+                    ),
                     shiny::textInput(
                       paste0(assay_name, "_counts_cell_search"),
                       label = "Search cells:",
@@ -82,8 +88,14 @@ assay_panel_ui <- function(assay_name, obj) {
             shiny::fluidRow(
               shiny::column(12,
                 if (assay_info$has_data) {
+                  # Search boxes stacked: genes (rows) on top, cells (columns) below
                   list(
                     shiny::verbatimTextOutput(paste0(assay_name, "_data_info")),
+                    shiny::textInput(
+                      paste0(assay_name, "_data_gene_search"),
+                      label = "Search genes:",
+                      placeholder = "Enter gene name (partial match, case-insensitive)"
+                    ),
                     shiny::textInput(
                       paste0(assay_name, "_data_cell_search"),
                       label = "Search cells:",
@@ -102,8 +114,14 @@ assay_panel_ui <- function(assay_name, obj) {
             shiny::fluidRow(
               shiny::column(12,
                 if (assay_info$has_scale_data) {
+                  # Search boxes stacked: genes (rows) on top, cells (columns) below
                   list(
                     shiny::verbatimTextOutput(paste0(assay_name, "_scale_info")),
+                    shiny::textInput(
+                      paste0(assay_name, "_scale_gene_search"),
+                      label = "Search genes:",
+                      placeholder = "Enter gene name (partial match, case-insensitive)"
+                    ),
                     shiny::textInput(
                       paste0(assay_name, "_scale_cell_search"),
                       label = "Search cells:",
@@ -182,6 +200,17 @@ assay_panel_server <- function(assay_name, obj, output, input) {
     head(matched, max_preview_cells)
   }
 
+  # Helper: resolve gene search term to integer indices, or NULL for default behaviour.
+  # Returns integer(0) when a non-empty search matches no genes.
+  get_gene_filter <- function(search_input_id) {
+    raw <- input[[search_input_id]]
+    search_term <- trimws(if (is.null(raw)) "" else raw)
+    if (nchar(search_term) == 0) return(NULL)
+    all_genes <- rownames(obj@assays[[assay_name]])
+    matched <- grep(search_term, all_genes, fixed = TRUE, ignore.case = TRUE)
+    head(matched, max_preview_features)
+  }
+
   # Cache layer data with reactive() - fetch once with subsetting, reuse for info + table.
   # When a cell search is active, cell indices come from get_cell_filter(); otherwise
   # the first max_preview_cells cells are shown (default behaviour).
@@ -190,30 +219,39 @@ assay_panel_server <- function(assay_name, obj, output, input) {
     if (!assay_info$has_counts) return(NULL)
     cell_filter <- get_cell_filter(paste0(assay_name, "_counts_cell_search"))
     if (!is.null(cell_filter) && length(cell_filter) == 0) return(NULL)
+    gene_filter <- get_gene_filter(paste0(assay_name, "_counts_gene_search"))
+    if (!is.null(gene_filter) && length(gene_filter) == 0) return(NULL)
     get_assay_data_safe(obj, assay_name, "counts",
-                        max_features = max_preview_features,
+                        max_features = if (is.null(gene_filter)) max_preview_features else NULL,
                         max_cells = if (is.null(cell_filter)) max_preview_cells else NULL,
-                        cells_filter = cell_filter)
+                        cells_filter = cell_filter,
+                        features_filter = gene_filter)
   })
 
   data_data <- shiny::reactive({
     if (!assay_info$has_data) return(NULL)
     cell_filter <- get_cell_filter(paste0(assay_name, "_data_cell_search"))
     if (!is.null(cell_filter) && length(cell_filter) == 0) return(NULL)
+    gene_filter <- get_gene_filter(paste0(assay_name, "_data_gene_search"))
+    if (!is.null(gene_filter) && length(gene_filter) == 0) return(NULL)
     get_assay_data_safe(obj, assay_name, "data",
-                        max_features = max_preview_features,
+                        max_features = if (is.null(gene_filter)) max_preview_features else NULL,
                         max_cells = if (is.null(cell_filter)) max_preview_cells else NULL,
-                        cells_filter = cell_filter)
+                        cells_filter = cell_filter,
+                        features_filter = gene_filter)
   })
 
   scale_data <- shiny::reactive({
     if (!assay_info$has_scale_data) return(NULL)
     cell_filter <- get_cell_filter(paste0(assay_name, "_scale_cell_search"))
     if (!is.null(cell_filter) && length(cell_filter) == 0) return(NULL)
+    gene_filter <- get_gene_filter(paste0(assay_name, "_scale_gene_search"))
+    if (!is.null(gene_filter) && length(gene_filter) == 0) return(NULL)
     get_assay_data_safe(obj, assay_name, "scale.data",
-                        max_features = max_preview_features,
+                        max_features = if (is.null(gene_filter)) max_preview_features else NULL,
                         max_cells = if (is.null(cell_filter)) max_preview_cells else NULL,
-                        cells_filter = cell_filter)
+                        cells_filter = cell_filter,
+                        features_filter = gene_filter)
   })
 
   # Helper to convert sparse matrix to dense for display.
@@ -242,7 +280,8 @@ assay_panel_server <- function(assay_name, obj, output, input) {
       pageLength = 10,
       lengthMenu = list(c(10, 25, 50, -1), c('10', '25', '50', 'All')),
       scrollX = TRUE,
-      scrollY = "400px"
+      scrollY = "400px",
+      dom = "ltipr"
     )
   }
 

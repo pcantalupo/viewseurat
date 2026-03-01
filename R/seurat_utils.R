@@ -82,7 +82,8 @@ validate_seurat_object <- function(obj) {
 #' @importFrom SeuratObject LayerData
 get_assay_data_safe <- function(obj, assay_name, layer,
                                 max_features = NULL, max_cells = NULL,
-                                cells_filter = NULL) {
+                                cells_filter = NULL,
+                                features_filter = NULL) {
   tryCatch({
     assay <- obj@assays[[assay_name]]
     if (is.null(assay)) return(NULL)
@@ -91,7 +92,9 @@ get_assay_data_safe <- function(obj, assay_name, layer,
     features <- NULL
     cells <- NULL
 
-    if (!is.null(max_features)) {
+    if (!is.null(features_filter)) {
+      features <- features_filter
+    } else if (!is.null(max_features)) {
       n_features <- nrow(assay)
       if (max_features < n_features) {
         features <- 1:max_features

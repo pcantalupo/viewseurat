@@ -10,7 +10,8 @@ get_assay_data_safe(
   layer,
   max_features = NULL,
   max_cells = NULL,
-  cells_filter = NULL
+  cells_filter = NULL,
+  features_filter = NULL
 )
 }
 \arguments{

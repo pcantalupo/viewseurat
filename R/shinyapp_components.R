@@ -659,10 +659,16 @@ viewseurat_server <- function(input, output, session) {
           status = "primary",
           solidHeader = TRUE,
           width = 12,
+          # Search boxes stacked: columns on top, cells (rows) below
           shiny::textInput(
             "metadata_col_search",
             label = "Search columns:",
             placeholder = "Enter column name (partial match, case-insensitive)"
+          ),
+          shiny::textInput(
+            "metadata_cell_search",
+            label = "Search cells:",
+            placeholder = "Enter barcode (partial match, case-insensitive)"
           ),
           shinycssloaders::withSpinner(DT::DTOutput("metadata_table"))
         )
@@ -688,6 +694,13 @@ viewseurat_server <- function(input, output, session) {
 
     display_data <- filter_metadata_columns(obj@meta.data, input$metadata_col_search)
 
+    # Filter rows by cell barcode search
+    cell_search <- trimws(if (is.null(input$metadata_cell_search)) "" else input$metadata_cell_search)
+    if (nchar(cell_search) > 0) {
+      matched <- grep(cell_search, rownames(display_data), fixed = TRUE, ignore.case = TRUE)
+      display_data <- display_data[matched, , drop = FALSE]
+    }
+
     DT::datatable(
       display_data,
       options = list(
@@ -695,7 +708,8 @@ viewseurat_server <- function(input, output, session) {
         scrollX = TRUE,
         scrollCollapse = TRUE,
         autoWidth = TRUE,
-        columnDefs = list(list(width = '100px', targets = "_all"))
+        columnDefs = list(list(width = '100px', targets = "_all")),
+        dom = "ltipr"
       ),
       filter = 'top',
       class = 'cell-border stripe'
