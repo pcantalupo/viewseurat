@@ -1,4 +1,4 @@
-FROM rocker/geospatial:4.5.1
+FROM rocker/r-ver:4.5.1
 RUN apt-get update -y && apt-get install -y  make pandoc libglpk-dev libcurl4-openssl-dev libicu-dev libpng-dev libxml2-dev libssl-dev python3 zlib1g-dev git && rm -rf /var/lib/apt/lists/*
 RUN mkdir -p /usr/local/lib/R/etc/ /usr/lib/R/etc/
 RUN echo "options(renv.config.pak.enabled = FALSE, repos = c(CRAN = 'https://cran.rstudio.com/'), download.file.method = 'libcurl', Ncpus = 4)" | tee /usr/local/lib/R/etc/Rprofile.site | tee /usr/lib/R/etc/Rprofile.site
