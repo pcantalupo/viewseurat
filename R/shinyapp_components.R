@@ -85,6 +85,21 @@ viewseurat_ui <- function() {
           }
         ")),
         shiny::tags$script(shiny::HTML("
+          // Listen for browser back/forward (popstate)
+          window.addEventListener('popstate', function(event) {
+            var params = new URLSearchParams(window.location.search);
+            var tab = params.get('tab');
+            var assay = params.get('assay');
+            if (tab) {
+              Shiny.setInputValue('url_nav', {
+                tab: tab,
+                assay: assay,
+                nonce: Date.now()
+              });
+            }
+          });
+        ")),
+        shiny::tags$script(shiny::HTML("
           $(document).on('shiny:connected', function() {
             // Listen for file input change (both browse and drag-drop)
             $('#seurat_file').on('change', function(e) {
@@ -223,6 +238,19 @@ viewseurat_server <- function(input, output, session) {
   uploaded_filename <- shiny::reactiveVal("")
   assay_nav_override <- shiny::reactiveVal(NULL)
 
+  # Guard flag to prevent infinite loops between URL push and tab restoration.
+  # "app" = normal navigation (push URL), "url" = restoring from back/forward (skip push)
+  nav_source <- shiny::reactiveVal("app")
+
+  # Helper to push URL state into browser history
+  push_url_state <- function(tab, assay = NULL) {
+    query <- paste0("?tab=", utils::URLencode(tab))
+    if (!is.null(assay)) {
+      query <- paste0(query, "&assay=", utils::URLencode(assay))
+    }
+    shiny::updateQueryString(query, mode = "push", session = session)
+  }
+
   # Check if object was pre-loaded via ViewSeurat()
   preloaded_obj <- shiny::getShinyOption("viewseurat.obj", default = NULL)
   preloaded_title <- shiny::getShinyOption("viewseurat.title", default = NULL)
@@ -236,7 +264,9 @@ viewseurat_server <- function(input, output, session) {
       uploaded_filename("")
     }
     # Auto-navigate to Overview tab when object is preloaded
+    nav_source("url")  # suppress URL push from sidebar observer
     shinydashboard::updateTabItems(session, "sidebar", "structure")
+    shiny::updateQueryString("?tab=structure", mode = "replace", session = session)
   }
 
   output$file_title <- shiny::renderUI({
@@ -300,7 +330,9 @@ viewseurat_server <- function(input, output, session) {
       # Hide waiter and navigate
       upload_waiter$hide()
       shiny::showNotification("Seurat object loaded successfully!", type = "message")
+      nav_source("url")  # suppress URL push from sidebar observer
       shinydashboard::updateTabItems(session, "sidebar", "structure")
+      shiny::updateQueryString("?tab=structure", mode = "replace", session = session)
 
     }, error = function(e) {
       upload_waiter$hide()
@@ -492,11 +524,22 @@ viewseurat_server <- function(input, output, session) {
     selected_assay <- input$assay_tabs
     if (!is.null(selected_assay) && selected_assay %in% names(obj@assays)) {
       initialize_assay(selected_assay, obj)
+      # Push URL with assay sub-tab (unless restoring from back/forward)
+      if (nav_source() != "url") {
+        push_url_state("assays", selected_assay)
+      }
     }
   })
 
   # Initialize and select the appropriate assay when the Assays tab is visited
   shiny::observeEvent(input$sidebar, {
+    # Push URL for non-assay tabs (assay URL is pushed by assay_tabs observer)
+    if (nav_source() == "url") {
+      nav_source("app")
+    } else if (input$sidebar != "assays") {
+      push_url_state(input$sidebar)
+    }
+
     if (input$sidebar == "assays") {
       shiny::req(seurat_obj())
       obj <- seurat_obj()
@@ -513,6 +556,40 @@ viewseurat_server <- function(input, output, session) {
       }
     }
   }, ignoreInit = TRUE)
+
+  # Handle browser back/forward navigation
+  shiny::observeEvent(input$url_nav, {
+    nav <- input$url_nav
+    shiny::req(nav$tab)
+
+    # Set guard so sidebar/assay_tabs observers don't re-push URL
+    nav_source("url")
+
+    # Navigate to the sidebar tab
+    shinydashboard::updateTabItems(session, "sidebar", nav$tab)
+
+    # If navigating to assays with a specific assay, set the override
+    if (nav$tab == "assays" && !is.null(nav$assay)) {
+      shiny::req(seurat_obj())
+      obj <- seurat_obj()
+      if (nav$assay %in% names(obj@assays)) {
+        assay_nav_override(nav$assay)
+      }
+    }
+  })
+
+  # Restore state from bookmarked/shared URL on initial load
+  shiny::observe({
+    query <- shiny::parseQueryString(session$clientData$url_search)
+    if (!is.null(query$tab) && query$tab != "upload") {
+      shiny::req(seurat_obj())
+      nav_source("url")
+      shinydashboard::updateTabItems(session, "sidebar", query$tab)
+      if (query$tab == "assays" && !is.null(query$assay)) {
+        assay_nav_override(query$assay)
+      }
+    }
+  }) |> shiny::bindEvent(seurat_obj(), once = TRUE)
 
   output$reductions_ui <- shiny::renderUI({
     shiny::req(seurat_obj())
