@@ -21,6 +21,14 @@ ViewSeurat()
 
 You can also open `app.R` in RStudio and click "Run App" to get the upload interface.
 
+## Docker
+
+```bash
+docker run --rm -p 3838:3838 virushunter/viewseurat
+```
+
+Then open <http://localhost:3838> in your browser.
+
 ## What you can view
 
 - **Overview** — Visualization of the main elements in a Seurat object with clickable components. The default assay is highlighted.
