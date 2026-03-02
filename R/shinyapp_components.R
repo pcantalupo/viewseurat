@@ -644,6 +644,23 @@ viewseurat_server <- function(input, output, session) {
       ),
       shiny::column(12,
         shinydashboard::box(
+          title = shiny::span(
+            "All Metadata Column Names",
+            shiny::tags$small(
+              style = "margin-left: 10px; font-weight: normal; opacity: 0.7;",
+              "click + to expand"
+            )
+          ),
+          status = "info",
+          solidHeader = TRUE,
+          collapsible = TRUE,
+          collapsed = TRUE,
+          width = 12,
+          shiny::verbatimTextOutput("metadata_col_names")
+        )
+      ),
+      shiny::column(12,
+        shinydashboard::box(
           id = "metadata_summary_box",
           title = "Column Profiler",
           status = "info",
@@ -686,6 +703,11 @@ viewseurat_server <- function(input, output, session) {
         )
       )
     )
+  })
+
+  output$metadata_col_names <- shiny::renderText({
+    shiny::req(seurat_obj())
+    paste(colnames(seurat_obj()@meta.data), collapse = "\n")
   })
 
   output$metadata_table <- DT::renderDT({
