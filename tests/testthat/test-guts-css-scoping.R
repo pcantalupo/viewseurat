@@ -7,7 +7,7 @@
 # Fix: CSS lives in www/guts-scoped.css with every selector prefixed by
 # .guts-tabset, and is loaded only when the Guts tab renders.
 
-css_path <- function() test_path("../../www/guts-scoped.css")
+css_path <- function() system.file("www/guts-scoped.css", package = "viewseurat")
 
 # -- www/guts-scoped.css exists and is scoped ----------------------------------
 

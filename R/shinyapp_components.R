@@ -1070,7 +1070,7 @@ viewseurat_server <- function(input, output, session) {
     guts_dep <- htmltools::htmlDependency(
       name = "guts-tabset-styles",
       version = "1.0",
-      src = normalizePath("www"),
+      src = system.file("www", package = "viewseurat"),
       stylesheet = "guts-scoped.css",
       all_files = FALSE
     )
