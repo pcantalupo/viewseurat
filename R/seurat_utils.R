@@ -318,7 +318,7 @@ build_metadata_profile <- function(meta, max_levels = 5L) {
     lbl <- names(show_levels)[i]
     cnt <- show_levels[i]
     pct <- round(cnt / n_total * 100, 1)
-    bar_w <- round(cnt / max_count * 100)
+    bar_w <- round(cnt / n_total * 100)
     color <- palette[((i - 1) %% length(palette)) + 1]
     paste0(
       "<div style='display:flex;align-items:center;gap:4px;margin:1px 0;font-size:11px;line-height:1.3;'>",
