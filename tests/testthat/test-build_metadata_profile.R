@@ -136,6 +136,31 @@ test_that("build_metadata_profile handles an all-NA character column gracefully"
   expect_equal(result$Complete, "0%")
 })
 
+# -- Bar width proportionality (issue #13) ------------------------------------
+
+test_that("bar widths are proportional to n_total, not max_count", {
+  # 6 cells: A=3 (50%), B=2 (33.3%), C=1 (16.7%)
+  meta <- data.frame(
+    grp = c("A", "A", "A", "B", "B", "C"),
+    stringsAsFactors = FALSE
+  )
+
+  result <- build_metadata_profile(meta)
+  html <- result$Distribution
+
+  # Extract all width:XX% values from the bar divs
+  matches <- regmatches(
+    html, gregexpr("width:(\\d+)%", html)
+  )[[1]]
+  widths <- as.integer(gsub("width:|%", "", matches))
+
+
+  # A = 3/6 = 50%, B = 2/6 ≈ 33%, C = 1/6 ≈ 17%
+  expect_equal(widths[1], 50L)
+  expect_equal(widths[2], 33L)
+  expect_equal(widths[3], 17L)
+})
+
 # -- HTML output sanity -------------------------------------------------------
 
 test_that("build_metadata_profile Distribution column contains HTML", {
