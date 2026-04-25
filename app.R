@@ -22,6 +22,7 @@ library(qs2)
 library(shinyjs)
 
 # Source all package R files
+source("R/metadata_utils.R")
 source("R/seurat_utils.R")
 source("R/plot_functions.R")
 source("R/assay_panel.R")

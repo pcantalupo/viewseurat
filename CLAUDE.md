@@ -10,7 +10,7 @@ Read-only Shiny app viewer for Seurat v4 and v5 objects.
 - `SCTAssay` does NOT have a `@layers` slot — direct `@layers[["..."]]` access crashes on it.
 - Use `get_layer_dim(assay_obj, layer)` in `seurat_utils.R` to safely get per-layer dimensions; it checks `slotNames` first and falls back appropriately. Same pattern applies anywhere you need to touch a layer's underlying matrix on an arbitrary assay type.
 - Seurat uses specialized assay classes: ChromatinAssay (Signac) for ATAC, SCTAssay for SCT
-- VisiumV2 is a subclass of FOV
+- VisiumV2 is a subclass of FOV; VisiumV1 is NOT (it extends SpatialImage directly) — always check both classes explicitly
 
 ## Shiny/CSS Gotcha
 AdminLTE has deep CSS specificity — CSS overrides must target actual shinydashboard DOM structure with browser-inspector-level selectors.
