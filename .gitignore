@@ -10,3 +10,5 @@ local/
 
 /.quarto/
 **/*.quarto_ipynb
+.positai
+.playwright-mcp/

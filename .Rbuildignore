@@ -11,3 +11,4 @@
 ^\.github$
 ^viewseurat\.code-workspace$
 ^dev$
+^\.positai$
