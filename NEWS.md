@@ -1,3 +1,10 @@
+# viewseurat 0.6.1
+
+* Add command-line scripts in `inst/scripts/`: `viewseurat.R` launches the app
+  on a saved `.rds`/`.qs2` object, and `viewseurat_servers.R` lists running
+  ViewSeurat servers (PID, port, object) with `--all` and `--killall` options.
+* Document the command-line scripts in the README.
+
 # viewseurat 0.6.0
 
 * Fix viewport jump when paginating Column Profiler and Cell Metadata DT
