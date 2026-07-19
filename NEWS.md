@@ -1,3 +1,9 @@
+# viewseurat 0.6.2
+
+* Add a Download TSV button to the metadata distribution plot. It exports the
+  x-axis values and counts: histogram bin left edges and counts for numeric
+  columns, category and count for categorical columns.
+
 # viewseurat 0.6.1
 
 * Add command-line scripts in `inst/scripts/`: `viewseurat.R` launches the app
