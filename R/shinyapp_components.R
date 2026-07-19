@@ -776,7 +776,8 @@ viewseurat_server <- function(input, output, session) {
           width = 12,
           shiny::selectInput("metadata_column", "Select Column:",
                       choices = colnames(obj@meta.data)),
-          shiny::plotOutput("metadata_plot", height = "400px")
+          shiny::plotOutput("metadata_plot", height = "400px"),
+          shiny::downloadButton("download_distribution", "Download TSV")
         )
       )
     )
@@ -901,6 +902,14 @@ viewseurat_server <- function(input, output, session) {
     shiny::req(seurat_obj(), input$metadata_column)
     plot_metadata_distribution(seurat_obj(), input$metadata_column)
   })
+
+  output$download_distribution <- shiny::downloadHandler(
+    filename = function() paste0("distribution_", input$metadata_column, ".tsv"),
+    content = function(file) {
+      df <- metadata_distribution_table(seurat_obj(), input$metadata_column)
+      utils::write.table(df, file, sep = "\t", row.names = FALSE, quote = FALSE)
+    }
+  )
 
   shiny::observeEvent(input$scroll_to_table, {
     shinyjs::runjs(

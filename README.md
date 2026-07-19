@@ -53,7 +53,7 @@ Then open <http://localhost:3838> in your browser.
 
 - **Overview** — Visualization of the main elements in a Seurat object with clickable components. The default assay is highlighted.
 - **Assays** — Direct visualization of the `counts`, `data`, and `scale.data` matrices, variable features, and feature metadata in searchable tables.
-- **Metadata** — Per-column summary with distribution graphics, searchable table, and distribution plots.
+- **Metadata** — Per-column summary with distribution graphics, searchable table, and distribution plots. The selected column's distribution can be downloaded as a TSV (x-axis values and counts).
 - **Reductions** — 2D scatter plots (UMAP, tSNE, PCA, etc.) colored by metadata. Shows which assay was used to build the reduction.
 - **Images** — Spatial tissue plots colored by metadata. Supports 10X Visium and FOV-based platforms (Nanostring CosMx, 10X Xenium).
 - **The Guts** — Raw S4 slot inspection with clickable buttons for all slots

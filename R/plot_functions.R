@@ -134,3 +134,30 @@ plot_metadata_distribution <- function(obj, column) {
 
   return(p)
 }
+
+#' Build Metadata Distribution Table
+#'
+#' Return the x-axis and counts underlying the distribution plot as a two-column
+#' data frame, suitable for download as TSV. For numeric columns the first column
+#' holds each histogram bin's left edge; for categorical columns it holds the
+#' category. Bin counts are taken from the plot itself so the table always
+#' matches what is displayed.
+#'
+#' @param obj A Seurat object
+#' @param column Metadata column name
+#' @return A data frame with columns \code{column} and \code{Count}
+#' @keywords internal
+#' @export
+metadata_distribution_table <- function(obj, column) {
+  data <- obj@meta.data[[column]]
+
+  if (is.numeric(data)) {
+    built <- ggplot2::ggplot_build(plot_metadata_distribution(obj, column))$data[[1]]
+    out <- data.frame(built$xmin, built$count)
+  } else {
+    out <- as.data.frame(table(data), stringsAsFactors = FALSE)
+  }
+
+  colnames(out) <- c(column, "Count")
+  return(out)
+}
