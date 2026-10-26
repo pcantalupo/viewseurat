@@ -179,6 +179,40 @@ test_that("bar widths are proportional to n_total, not max_count", {
   expect_equal(widths[3], 17L)
 })
 
+# -- Exact counts and ordering ------------------------------------------------
+
+test_that("numeric histogram matches hist() for values on bin breaks", {
+  vals   <- c(0, 1:15 / 15, 1, NA)
+  result <- build_metadata_profile(data.frame(x = vals))
+
+  brks     <- seq(0, 1, length.out = 16)
+  expected <- graphics::hist(vals[!is.na(vals)], breaks = brks, plot = FALSE)$counts
+  expect_equal(result$Distribution, .css_bar_chart(expected, "#4682B4"))
+})
+
+test_that("categorical ties keep sorted level order", {
+  meta   <- data.frame(grp = c("b", "a", "b", "a", "c"), stringsAsFactors = FALSE)
+  result <- build_metadata_profile(meta)
+
+  labels <- regmatches(result$Distribution,
+                       gregexpr("[a-z] \\(", result$Distribution))[[1]]
+  expect_equal(labels, c("a (", "b (", "c ("))
+})
+
+test_that("factor unused levels count toward unique levels", {
+  meta   <- data.frame(grp = factor(c("a", "a", "b"), levels = c("z", "a", "b", "q")))
+  result <- build_metadata_profile(meta)
+
+  expect_equal(result$Stats, "4 unique")
+})
+
+test_that("POSIXct columns are labeled with formatted dates", {
+  meta   <- data.frame(dt = as.POSIXct(c("2020-01-01", "2020-01-01", "2021-06-01"), tz = "UTC"))
+  result <- build_metadata_profile(meta)
+
+  expect_true(grepl("2020-01-01 (66.7%)", result$Distribution, fixed = TRUE))
+})
+
 # -- HTML output sanity -------------------------------------------------------
 
 test_that("build_metadata_profile Distribution column contains HTML", {
