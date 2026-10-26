@@ -1,3 +1,9 @@
+# viewseurat 0.6.3
+
+* Skip level counts for all-unique metadata columns
+* Turn off metadata column filters above 100,000 cells
+* Speed up metadata profile with tabulate()
+
 # viewseurat 0.6.2
 
 * Add a Download TSV button to the metadata distribution plot. It exports the
