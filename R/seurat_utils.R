@@ -299,6 +299,16 @@ build_metadata_profile <- function(meta, max_levels = 5L) {
 
 #' @keywords internal
 .profile_categorical <- function(vals, n_total, max_levels = 5L) {
+  # ID-like columns (e.g. cell barcodes): every level has count 1, so the bars
+  # carry no information, and table() on 100k+ distinct strings takes seconds
+  clean = vals[!is.na(vals)]
+  if (length(clean) > max_levels && anyDuplicated(clean) == 0) {
+    return(list(
+      html = "<span style='color:#999'>all values unique</span>",
+      stats = paste0(length(clean), " unique (all values distinct)")
+    ))
+  }
+
   tbl <- sort(table(vals, useNA = "no"), decreasing = TRUE)
   n_levels <- length(tbl)
 

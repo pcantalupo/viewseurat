@@ -93,6 +93,24 @@ test_that("build_metadata_profile classifies character columns correctly", {
   expect_true(grepl("unique", result$Stats))
 })
 
+test_that("build_metadata_profile skips level bars when every value is unique", {
+  meta   <- data.frame(cell_id = c(paste0("cell", 1:10), NA),
+                       stringsAsFactors = FALSE)
+  result <- build_metadata_profile(meta)
+
+  expect_equal(result$Stats, "10 unique (all values distinct)")
+  expect_true(grepl("all values unique", result$Distribution))
+  expect_false(grepl("cell1", result$Distribution))
+})
+
+test_that("build_metadata_profile still draws bars for few unique values", {
+  meta   <- data.frame(grp = c("A", "B", "C"), stringsAsFactors = FALSE)
+  result <- build_metadata_profile(meta)
+
+  expect_equal(result$Stats, "3 unique")
+  expect_true(grepl("A (33.3%)", result$Distribution, fixed = TRUE))
+})
+
 # -- Completeness -------------------------------------------------------------
 
 test_that("build_metadata_profile reports completeness as a percentage string", {
