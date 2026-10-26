@@ -801,8 +801,19 @@ viewseurat_server <- function(input, output, session) {
       display_data <- display_data[matched, , drop = FALSE]
     }
 
+    # DT's filter='top' scans every numeric value to size its range sliders
+    # (~20 s for 800k cells x 200 numeric columns), so skip it on big tables
+    if (nrow(display_data) > 100000) {
+      filter_mode = "none"
+      filter_note = "Column filters are off for tables over 100,000 cells. Use Search cells to narrow rows."
+    } else {
+      filter_mode = "top"
+      filter_note = NULL
+    }
+
     DT::datatable(
       display_data,
+      caption = filter_note,
       options = list(
         pageLength = 10,
         scrollX = TRUE,
@@ -841,7 +852,7 @@ viewseurat_server <- function(input, output, session) {
           "}"
         )
       ),
-      filter = 'top',
+      filter = filter_mode,
       class = 'cell-border stripe'
     )
   }, server = TRUE)
