@@ -213,6 +213,26 @@ test_that("POSIXct columns are labeled with formatted dates", {
   expect_true(grepl("2020-01-01 (66.7%)", result$Distribution, fixed = TRUE))
 })
 
+# -- Progress callback --------------------------------------------------------
+
+test_that("build_metadata_profile calls on_column once per column", {
+  meta  <- data.frame(a = 1:3, b = c("x", "y", "x"), c = c(TRUE, FALSE, NA))
+  calls <- list()
+  build_metadata_profile(meta, on_column = function(i, n) {
+    calls[[length(calls) + 1]] <<- c(i, n)
+  })
+
+  expect_equal(calls, list(c(1L, 3L), c(2L, 3L), c(3L, 3L)))
+})
+
+test_that("build_metadata_profile output is the same with and without on_column", {
+  meta <- data.frame(a = c(1.5, 2, NA), b = c("x", "y", "x"))
+  expect_identical(
+    build_metadata_profile(meta, on_column = function(i, n) NULL),
+    build_metadata_profile(meta)
+  )
+})
+
 # -- HTML output sanity -------------------------------------------------------
 
 test_that("build_metadata_profile Distribution column contains HTML", {

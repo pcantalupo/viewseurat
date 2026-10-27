@@ -4,12 +4,15 @@
 \alias{build_metadata_profile}
 \title{Build Metadata Column Profile}
 \usage{
-build_metadata_profile(meta, max_levels = 5L)
+build_metadata_profile(meta, max_levels = 5L, on_column = NULL)
 }
 \arguments{
 \item{meta}{A data.frame (typically obj@meta.data)}
 
 \item{max_levels}{Maximum number of factor/character levels to display}
+
+\item{on_column}{Optional function called as `on_column(i, n)` after column
+`i` of `n` is profiled, e.g. to update a Shiny progress bar}
 }
 \value{
 A data.frame suitable for DT::datatable with escape = FALSE

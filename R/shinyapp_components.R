@@ -39,6 +39,7 @@ viewseurat_ui <- function() {
 
     shinydashboard::dashboardBody(
       waiter::useWaiter(),
+      waiter::useAttendant(),
       shinyjs::useShinyjs(),
       shiny::tags$head(
         shiny::tags$style(shiny::HTML("
@@ -743,7 +744,15 @@ viewseurat_server <- function(input, output, session) {
           status = "info",
           solidHeader = TRUE,
           width = 12,
-          shinycssloaders::withSpinner(DT::DTOutput("metadata_profiler"))
+          # Per-column progress at the top of the box; on a 800k-cell object
+          # profiling takes ~10 s, and a centered spinner can sit off screen
+          # Dark, overflowing label so the text stays readable while the bar is narrow
+          shiny::tags$style(shiny::HTML(
+            "#profiler_progress .progress-bar { color: #333; overflow: visible; white-space: nowrap; text-align: left; padding-left: 6px; }"
+          )),
+          waiter::attendantBar("profiler_progress", hidden = TRUE,
+                               striped = TRUE, animated = TRUE),
+          DT::DTOutput("metadata_profiler")
         )
       ),
       shiny::column(12,
@@ -859,7 +868,14 @@ viewseurat_server <- function(input, output, session) {
 
   output$metadata_profiler <- DT::renderDT({
     shiny::req(seurat_obj())
-    profile_df <- build_metadata_profile(seurat_obj()@meta.data)
+    progress = waiter::Attendant$new("profiler_progress", hide_on_max = TRUE)
+    start = Sys.time()
+    profile_df <- build_metadata_profile(seurat_obj()@meta.data, on_column = function(i, n) {
+      # Remaining time from the average per-column time so far
+      elapsed = as.numeric(difftime(Sys.time(), start, units = "secs"))
+      remaining = round(elapsed / i * (n - i))
+      progress$set(i / n * 100, text = sprintf("Profiling column %d of %d, about %d s left", i, n, remaining))
+    })
 
     DT::datatable(
       profile_df,

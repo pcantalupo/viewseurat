@@ -190,13 +190,16 @@ get_layer_dim <- function(assay_obj, layer) {
 #'
 #' @param meta A data.frame (typically obj@@meta.data)
 #' @param max_levels Maximum number of factor/character levels to display
+#' @param on_column Optional function called as `on_column(i, n)` after column
+#'   `i` of `n` is profiled, e.g. to update a Shiny progress bar
 #' @return A data.frame suitable for DT::datatable with escape = FALSE
 #' @keywords internal
 #' @export
-build_metadata_profile <- function(meta, max_levels = 5L) {
+build_metadata_profile <- function(meta, max_levels = 5L, on_column = NULL) {
   n_rows <- nrow(meta)
 
-  profiles <- lapply(colnames(meta), function(col) {
+  profiles <- lapply(seq_len(ncol(meta)), function(i) {
+    col = colnames(meta)[i]
     vals <- meta[[col]]
     col_class <- class(vals)[1]
     n_na <- sum(is.na(vals))
@@ -217,7 +220,7 @@ build_metadata_profile <- function(meta, max_levels = 5L) {
       type_label <- "character"
     }
 
-    data.frame(
+    row = data.frame(
       Column = col,
       Type = type_label,
       Distribution = info$html,
@@ -225,6 +228,10 @@ build_metadata_profile <- function(meta, max_levels = 5L) {
       Complete = paste0(pct_complete, "%"),
       stringsAsFactors = FALSE
     )
+    if (!is.null(on_column)) {
+      on_column(i, ncol(meta))
+    }
+    row
   })
 
   do.call(rbind, profiles)
