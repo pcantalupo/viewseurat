@@ -1,3 +1,7 @@
+# viewseurat 0.6.4
+
+* Show Column Profiler progress bar with time estimate
+
 # viewseurat 0.6.3
 
 * Skip level counts for all-unique metadata columns
